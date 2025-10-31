@@ -180,6 +180,26 @@ class App {
             console.error('Required elements not found');
             return;
         }
+        
+        // Ensure file input is styled correctly
+        this.fileInput.style.position = 'absolute';
+        this.fileInput.style.top = '0';
+        this.fileInput.style.left = '0';
+        this.fileInput.style.width = '100%';
+        this.fileInput.style.height = '100%';
+        this.fileInput.style.opacity = '0';
+        this.fileInput.style.cursor = 'pointer';
+        this.fileInput.style.zIndex = '10';
+        this.fileInput.style.fontSize = '0';
+        
+        // Ensure upload area has overflow hidden
+        this.uploadArea.style.overflow = 'hidden';
+        
+        // Remove Clear All button if it exists (should not exist, but cleanup)
+        const clearBtn = document.getElementById('clearBtn');
+        if (clearBtn) {
+            clearBtn.remove();
+        }
     }
 
     setupEventListeners() {
