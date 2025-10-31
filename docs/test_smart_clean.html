@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Smart Clean</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Clean Test</h1>
+    
+    <div class="test-section">
+        <h2>1. WebGPU Check</h2>
+        <button id="checkWebGPU">Check WebGPU Support</button>
+        <div id="webgpuResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. WebLLM Import Test</h2>
+        <button id="testImport">Test WebLLM Import</button>
+        <div id="importResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Model Loading Test</h2>
+        <button id="testModel">Test Model Loading</button>
+        <div id="modelResult"></div>
+    </div>
+    
+    <script type="module">
+        const checkWebGPU = document.getElementById('checkWebGPU');
+        const webgpuResult = document.getElementById('webgpuResult');
+        const testImport = document.getElementById('testImport');
+        const importResult = document.getElementById('importResult');
+        const testModel = document.getElementById('testModel');
+        const modelResult = document.getElementById('modelResult');
+        
+        checkWebGPU.addEventListener('click', async () => {
+            try {
+                if (!navigator.gpu) {
+                    webgpuResult.innerHTML = '<p style="color: red;">❌ WebGPU not available</p>';
+                    return;
+                }
+                const adapter = await navigator.gpu.requestAdapter();
+                if (adapter) {
+                    webgpuResult.innerHTML = '<p style="color: green;">✅ WebGPU is available!</p>';
+                } else {
+                    webgpuResult.innerHTML = '<p style="color: orange;">⚠️ WebGPU adapter not available</p>';
+                }
+            } catch (e) {
+                webgpuResult.innerHTML = `<p style="color: red;">❌ Error: ${e.message}</p>`;
+            }
+        });
+        
+        testImport.addEventListener('click', async () => {
+            importResult.innerHTML = '<p>Loading WebLLM...</p>';
+            try {
+                const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+                console.log('WebLLM module:', webllm);
+                console.log('Keys:', Object.keys(webllm));
+                
+                const CreateEngine = webllm.CreateMLCEngine || 
+                                    webllm.default?.CreateMLCEngine || 
+                                    webllm.createEngine ||
+                                    webllm.default;
+                
+                importResult.innerHTML = `
+                    <p style="color: green;">✅ WebLLM imported successfully!</p>
+                    <pre>Available exports: ${Object.keys(webllm).join(', ')}</pre>
+                    <pre>CreateEngine type: ${typeof CreateEngine}</pre>
+                    <pre>CreateEngine: ${CreateEngine ? 'Found' : 'Not found'}</pre>
+                `;
+            } catch (e) {
+                importResult.innerHTML = `<p style="color: red;">❌ Error: ${e.message}</p><pre>${e.stack}</pre>`;
+            }
+        });
+        
+        testModel.addEventListener('click', async () => {
+            modelResult.innerHTML = '<p>Loading model...</p>';
+            try {
+                const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+                const CreateEngine = webllm.CreateMLCEngine || 
+                                    webllm.default?.CreateMLCEngine || 
+                                    webllm.createEngine ||
+                                    webllm.default;
+                
+                if (!CreateEngine || typeof CreateEngine !== 'function') {
+                    throw new Error('CreateMLCEngine not found');
+                }
+                
+                modelResult.innerHTML = '<p>Creating engine with TinyLlama...</p>';
+                
+                const engine = await CreateEngine('TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC', {
+                    gpuMemoryUtilization: 0.7
+                });
+                
+                modelResult.innerHTML = '<p style="color: green;">✅ Model loaded successfully!</p>';
+                
+                // Test a simple completion
+                modelResult.innerHTML += '<p>Testing completion...</p>';
+                const reply = await engine.chat.completions.create({
+                    messages: [{ role: 'user', content: 'Say hello' }],
+                    temperature: 0.7,
+                    max_tokens: 50
+                });
+                
+                modelResult.innerHTML += `
+                    <p style="color: green;">✅ Completion successful!</p>
+                    <pre>Response: ${reply.choices?.[0]?.message?.content || 'No content'}</pre>
+                `;
+            } catch (e) {
+                modelResult.innerHTML = `<p style="color: red;">❌ Error: ${e.message}</p><pre>${e.stack}</pre>`;
+            }
+        });
+    </script>
+</body>
+</html>
+

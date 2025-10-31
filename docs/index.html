@@ -19,7 +19,7 @@
     <meta property="twitter:title" content="DocStripper - Batch Document Cleaner">
     <meta property="twitter:description" content="Remove noise from text documents automatically. Clean page numbers, headers, footers, duplicates, and empty lines. Works entirely in your browser - 100% private.">
     
-    <link rel="stylesheet" href="assets/style.css?v=15">
+    <link rel="stylesheet" href="assets/style.css?v=17">
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="apple-touch-icon" href="assets/icon.svg">
 </head>
@@ -64,6 +64,50 @@
                     <!-- Cleaning Settings -->
                     <div class="settings-section" id="settingsSection">
                         <h3>Cleaning Options</h3>
+                        
+                        <!-- Cleaning Mode Selection -->
+                        <div class="cleaning-mode-selector">
+                            <label class="mode-option">
+                                <input type="radio" name="cleaningMode" id="fastMode" value="fast" checked>
+                                <span class="mode-label">
+                                    <span class="mode-title">⚡ Fast Clean</span>
+                                    <span class="mode-desc">Rule-based cleaning (instant)</span>
+                                </span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="cleaningMode" id="smartMode" value="smart">
+                                <span class="mode-label">
+                                    <span class="mode-title">🤖 Smart Clean <span class="beta-badge">Beta</span></span>
+                                    <span class="mode-desc">AI-powered cleaning (on-device LLM)</span>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Smart Mode Warning -->
+                        <div class="smart-mode-warning" id="smartModeWarning" style="display: none;">
+                            <div class="warning-icon">ℹ️</div>
+                            <div class="warning-content">
+                                <strong>Smart Clean requires:</strong>
+                                <ul>
+                                    <li>One-time download of ~100-200 MB (model weights)</li>
+                                    <li>WebGPU support (most modern browsers)</li>
+                                    <li>Works offline after first load</li>
+                                    <li>Files never leave your browser</li>
+                                </ul>
+                                <p class="warning-note"><strong>Note:</strong> Cleaning options below customize the AI's behavior. Unchecked options will be preserved in the output.</p>
+                                <p class="warning-note">If WebGPU is unavailable, Fast Clean will be used automatically.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="smart-progress" id="smartProgress" style="display: none;">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">Loading model...</div>
+                            <button class="btn btn-secondary cancel-btn" id="cancelBtn" style="display: none;">Cancel</button>
+                        </div>
+                        
                         <div class="settings-grid">
                             <label class="setting-item">
                                 <input type="checkbox" id="removeEmptyLines" checked>
@@ -111,6 +155,9 @@
                         <button class="btn btn-primary start-btn" id="startBtn" style="margin-top: 1.5rem; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; display: none;">
                             🚀 Start Cleaning
                         </button>
+                        <p class="mode-note" id="modeNote" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light); text-align: center;">
+                            Fast Clean mode selected
+                        </p>
                     </div>
 
                     <div id="fileList" class="file-list"></div>
@@ -307,6 +354,6 @@ Empty line above.</code></pre>
         </div>
     </footer>
 
-    <script src="assets/app.js?v=14"></script>
+    <script src="assets/app.js?v=16"></script>
 </body>
 </html>

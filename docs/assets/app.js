@@ -234,7 +234,431 @@ class DocStripper {
     }
 }
 
-// UI Management
+// Smart Cleaner using WebLLM
+class SmartCleaner {
+    constructor() {
+        this.engine = null;
+        this.isLoading = false;
+        this.isCancelled = false;
+        this.progressCallback = null;
+        // Using a small, efficient model - Qwen2.5-0.5B is compact and fast
+        // Fallback to TinyLlama if Qwen not available
+        this.modelId = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
+        this.fallbackModelId = 'TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC';
+        // Settings for customizing cleaning behavior
+        this.settings = {
+            removeEmptyLines: true,
+            removePageNumbers: true,
+            removeHeadersFooters: true,
+            removeDuplicates: true,
+            removePunctuationLines: true,
+            preserveParagraphSpacing: true,
+        };
+    }
+    
+    setSettings(settings) {
+        this.settings = { ...this.settings, ...settings };
+    }
+
+    async checkWebGPUSupport() {
+        if (!navigator.gpu) {
+            return false;
+        }
+        try {
+            const adapter = await navigator.gpu.requestAdapter();
+            return adapter !== null;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async ensureEngine() {
+        if (this.engine) return this.engine;
+        if (this.isLoading) {
+            // Wait for ongoing load
+            while (this.isLoading) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            return this.engine;
+        }
+
+        this.isLoading = true;
+        this.isCancelled = false;
+
+        try {
+            const hasWebGPU = await this.checkWebGPUSupport();
+            if (!hasWebGPU) {
+                throw new Error('WebGPU not supported');
+            }
+
+            // Dynamically import WebLLM
+            // Note: WebLLM may require specific setup or CDN configuration
+            // For production, consider bundling WebLLM or using a specific CDN
+            const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+            
+            // WebLLM API may vary - try different possible export names
+            const CreateEngine = webllm.CreateMLCEngine || 
+                                webllm.default?.CreateMLCEngine || 
+                                webllm.createEngine ||
+                                webllm.default;
+
+            if (!CreateEngine || typeof CreateEngine !== 'function') {
+                throw new Error('WebLLM CreateMLCEngine not found. Please check WebLLM import.');
+            }
+
+            this.updateProgress(10, 'Loading model...');
+
+            // Try primary model first
+            try {
+                this.engine = await CreateEngine(
+                    this.modelId,
+                    {
+                        gpuMemoryUtilization: 0.7,
+                        progressCallback: (progress) => {
+                            // Progress callback format may vary by WebLLM version
+                            if (progress && typeof progress.loaded === 'number' && typeof progress.total === 'number') {
+                                const progressPercent = Math.min((progress.loaded / progress.total) * 90 + 10, 90);
+                                this.updateProgress(progressPercent, `Loading model weights... ${Math.round(progressPercent)}%`);
+                            } else if (typeof progress === 'number') {
+                                // Some versions pass progress as a number 0-100
+                                this.updateProgress(progress, `Loading model weights... ${Math.round(progress)}%`);
+                            } else {
+                                // Fallback progress indication
+                                this.updateProgress(50, 'Loading model...');
+                            }
+                        }
+                    }
+                );
+            } catch (e) {
+                console.warn('Primary model failed, trying fallback:', e);
+                this.updateProgress(20, 'Trying fallback model...');
+                this.engine = await CreateEngine(
+                    this.fallbackModelId,
+                    {
+                        gpuMemoryUtilization: 0.7,
+                        progressCallback: (progress) => {
+                            if (progress && typeof progress.loaded === 'number' && typeof progress.total === 'number') {
+                                const progressPercent = Math.min((progress.loaded / progress.total) * 90 + 10, 90);
+                                this.updateProgress(progressPercent, `Loading model weights... ${Math.round(progressPercent)}%`);
+                            } else if (typeof progress === 'number') {
+                                this.updateProgress(progress, `Loading model weights... ${Math.round(progress)}%`);
+                            } else {
+                                this.updateProgress(50, 'Loading model...');
+                            }
+                        }
+                    }
+                );
+            }
+
+            this.updateProgress(100, 'Model loaded!');
+            this.isLoading = false;
+            return this.engine;
+        } catch (error) {
+            this.isLoading = false;
+            console.error('Failed to load WebLLM:', error);
+            throw error;
+        }
+    }
+
+    setProgressCallback(callback) {
+        this.progressCallback = callback;
+    }
+
+    updateProgress(percent, text) {
+        if (this.progressCallback) {
+            this.progressCallback(percent, text);
+        }
+    }
+
+    cancel() {
+        this.isCancelled = true;
+    }
+
+    chunkText(text, maxChunkSize = 3000) {
+        const lines = text.split('\n');
+        const chunks = [];
+        let currentChunk = [];
+        let currentSize = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const lineSize = lines[i].length + 1; // +1 for newline
+            if (currentSize + lineSize > maxChunkSize && currentChunk.length > 0) {
+                chunks.push({
+                    lines: currentChunk,
+                    startIndex: chunks.length === 0 ? 0 : chunks[chunks.length - 1].startIndex + chunks[chunks.length - 1].lines.length
+                });
+                currentChunk = [];
+                currentSize = 0;
+            }
+            currentChunk.push(lines[i]);
+            currentSize += lineSize;
+        }
+
+        if (currentChunk.length > 0) {
+            chunks.push({
+                lines: currentChunk,
+                startIndex: chunks.length === 0 ? 0 : chunks[chunks.length - 1].startIndex + chunks[chunks.length - 1].lines.length
+            });
+        }
+
+        return chunks;
+    }
+
+    buildPromptForChunk(chunk) {
+        const linesWithIndices = chunk.lines.map((line, idx) => {
+            const globalIdx = chunk.startIndex + idx;
+            return `${globalIdx}: ${line}`;
+        }).join('\n');
+
+        // Build dynamic instructions based on settings
+        const removeInstructions = [];
+        const preserveInstructions = [];
+        
+        if (this.settings.removePageNumbers) {
+            removeInstructions.push('- Page numbers: standalone digits (1, 2, 3), Roman numerals (I, II, III), single letters (A, B, C)');
+        }
+        
+        if (this.settings.removeHeadersFooters) {
+            removeInstructions.push('- Headers/footers: "Page X of Y", "Confidential", "DRAFT", "Internal Use Only", "PROPRIETARY", etc.');
+        }
+        
+        if (this.settings.removePunctuationLines) {
+            removeInstructions.push('- Punctuation-only lines: lines with only symbols (---, ***, ===, ___, etc.)');
+        }
+        
+        if (this.settings.removeDuplicates) {
+            removeInstructions.push('- Consecutive duplicates: if line N is identical to line N-1, drop line N (keep first occurrence)');
+        }
+        
+        if (this.settings.removeEmptyLines) {
+            if (this.settings.preserveParagraphSpacing) {
+                removeInstructions.push('- Extra empty lines: if there are 2+ consecutive empty lines, keep only one between paragraphs');
+            } else {
+                removeInstructions.push('- Empty lines: remove all empty/whitespace-only lines');
+            }
+        }
+        
+        preserveInstructions.push('- All content text (sentences, paragraphs, meaningful text)');
+        if (this.settings.preserveParagraphSpacing) {
+            preserveInstructions.push('- One empty line between paragraphs (for spacing)');
+        }
+        preserveInstructions.push('- Structure and formatting of actual content');
+        
+        // Build rules section
+        const rules = [];
+        if (this.settings.removeDuplicates) {
+            rules.push('1. For consecutive duplicate lines: keep the FIRST occurrence, drop subsequent ones');
+        }
+        if (this.settings.removeEmptyLines) {
+            if (this.settings.preserveParagraphSpacing) {
+                rules.push('2. Empty lines: preserve ONE empty line between non-empty paragraphs, drop multiple empty lines');
+            } else {
+                rules.push('2. Empty lines: remove ALL empty lines');
+            }
+        }
+        if (this.settings.removePageNumbers) {
+            rules.push('3. Page numbers: drop ONLY if the entire line is just a number/letter (e.g., "1", "III", "A")');
+        }
+        rules.push('4. Keep ALL meaningful content - when in doubt, use "keep"');
+
+        const systemPrompt = `You are a document cleaning assistant. Analyze each line and decide whether to keep, drop, or replace it.
+
+CRITICAL: Respond ONLY with valid JSON. No markdown, no explanations, no comments. Only JSON.
+
+ACTIONS:
+- "keep": Preserve the line exactly as-is (for content text)
+- "drop": Remove the line completely (for noise: page numbers, headers, footers, duplicates, punctuation-only lines)
+- "replace": Change the line text (use ONLY for fixing formatting issues, very rarely)
+
+${removeInstructions.length > 0 ? `REMOVE (use "drop"):
+${removeInstructions.join('\n')}` : 'REMOVE: Nothing (all cleaning options are disabled - only preserve content)'}
+
+PRESERVE (use "keep"):
+${preserveInstructions.join('\n')}
+
+IMPORTANT RULES:
+${rules.join('\n')}
+
+JSON FORMAT (strict):
+{
+  "lines": [
+    {"i": 0, "action": "keep"},
+    {"i": 1, "action": "drop"},
+    {"i": 2, "action": "keep"},
+    {"i": 3, "action": "replace", "text": "Fixed text"}
+  ]
+}
+
+EXAMPLE:
+Input:
+0: Page 1 of 10
+1: Confidential
+2: 
+3: This is important content.
+4: This is important content.
+5: 
+6: More content here.
+
+Expected JSON:
+{"lines":[
+  {"i":0,"action":"drop"},
+  {"i":1,"action":"drop"},
+  {"i":2,"action":"keep"},
+  {"i":3,"action":"keep"},
+  {"i":4,"action":"drop"},
+  {"i":5,"action":"keep"},
+  {"i":6,"action":"keep"}
+]}`;
+
+        const userPrompt = `Return JSON with action for each line. Process ALL lines in order.
+
+Lines with indices:
+${linesWithIndices}
+
+Respond with JSON only:`;
+
+        return { systemPrompt, userPrompt };
+    }
+
+    safeParseJSON(jsonString) {
+        try {
+            // Try to extract JSON from markdown code blocks if present
+            const jsonMatch = jsonString.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[1]);
+            }
+            return JSON.parse(jsonString);
+        } catch (e) {
+            console.error('JSON parse error:', e, 'Raw:', jsonString);
+            return null;
+        }
+    }
+
+    applyPlan(chunk, plan) {
+        if (!plan || !plan.lines || !Array.isArray(plan.lines)) {
+            return chunk.lines.join('\n');
+        }
+
+        const result = [];
+        const planMap = new Map();
+        plan.lines.forEach(item => {
+            if (item.i !== undefined && item.action) {
+                planMap.set(item.i, item);
+            }
+        });
+
+        chunk.lines.forEach((line, idx) => {
+            const globalIdx = chunk.startIndex + idx;
+            const planItem = planMap.get(globalIdx);
+
+            if (!planItem) {
+                result.push(line);
+                return;
+            }
+
+            switch (planItem.action) {
+                case 'keep':
+                    result.push(line);
+                    break;
+                case 'drop':
+                    // Skip this line
+                    break;
+                case 'replace':
+                    result.push(planItem.text || line);
+                    break;
+                default:
+                    result.push(line);
+            }
+        });
+
+        return result.join('\n');
+    }
+
+    async cleanText(text, settings = null) {
+        if (!text) return { text: '', stats: this.getEmptyStats() };
+
+        // Update settings if provided
+        if (settings) {
+            this.setSettings(settings);
+        }
+
+        try {
+            const engine = await this.ensureEngine();
+            if (this.isCancelled) {
+                throw new Error('Cancelled by user');
+            }
+
+            const chunks = this.chunkText(text, 3000);
+            let result = [];
+            const stats = {
+                linesRemoved: 0,
+                duplicatesCollapsed: 0,
+                emptyLinesRemoved: 0,
+                headerFooterRemoved: 0,
+                punctuationLinesRemoved: 0,
+            };
+
+            const originalLineCount = text.split('\n').length;
+
+            for (let i = 0; i < chunks.length; i++) {
+                if (this.isCancelled) {
+                    throw new Error('Cancelled by user');
+                }
+
+                const chunk = chunks[i];
+                const progressPercent = Math.floor((i / chunks.length) * 100);
+                this.updateProgress(progressPercent, `Processing chunk ${i + 1}/${chunks.length}...`);
+
+                const { systemPrompt, userPrompt } = this.buildPromptForChunk(chunk);
+
+                const reply = await engine.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.2,
+                    max_tokens: 2000
+                });
+
+                const content = reply.choices?.[0]?.message?.content ?? '{}';
+                const plan = this.safeParseJSON(content);
+
+                if (!plan) {
+                    console.warn('Failed to parse LLM response, using original chunk');
+                    result.push(chunk.lines.join('\n'));
+                } else {
+                    const cleanedChunk = this.applyPlan(chunk, plan);
+                    result.push(cleanedChunk);
+                }
+
+                // Small delay to prevent UI freezing
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            const cleanedText = result.join('\n');
+            const cleanedLineCount = cleanedText.split('\n').length;
+            stats.linesRemoved = originalLineCount - cleanedLineCount;
+
+            return {
+                text: cleanedText,
+                stats: stats
+            };
+        } catch (error) {
+            console.error('Smart clean error:', error);
+            throw error;
+        }
+    }
+
+    getEmptyStats() {
+        return {
+            linesRemoved: 0,
+            duplicatesCollapsed: 0,
+            emptyLinesRemoved: 0,
+            headerFooterRemoved: 0,
+            punctuationLinesRemoved: 0,
+        };
+    }
+}
 class App {
     constructor() {
         // Initialize with default settings (all enabled)
@@ -246,8 +670,10 @@ class App {
             removePunctuationLines: true,
             preserveParagraphSpacing: true,
         });
+        this.smartCleaner = new SmartCleaner();
         this.files = [];
         this.results = [];
+        this.cleaningMode = 'fast'; // 'fast' or 'smart'
         this.initializeElements();
         this.setupEventListeners();
     }
@@ -262,6 +688,16 @@ class App {
         // Start button
         this.startBtn = document.getElementById('startBtn');
         
+        // Mode selection
+        this.fastMode = document.getElementById('fastMode');
+        this.smartMode = document.getElementById('smartMode');
+        this.smartModeWarning = document.getElementById('smartModeWarning');
+        this.smartProgress = document.getElementById('smartProgress');
+        this.progressBar = document.getElementById('progressBar');
+        this.progressText = document.getElementById('progressText');
+        this.cancelBtn = document.getElementById('cancelBtn');
+        this.modeNote = document.getElementById('modeNote');
+        
         // Settings checkboxes
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
         this.removePageNumbers = document.getElementById('removePageNumbers');
@@ -275,6 +711,11 @@ class App {
             console.error('Required elements not found');
             return;
         }
+        
+        // Setup progress callback for SmartCleaner
+        this.smartCleaner.setProgressCallback((percent, text) => {
+            this.updateProgress(percent, text);
+        });
         
         // Ensure file input is styled correctly
         this.fileInput.style.position = 'absolute';
@@ -433,6 +874,79 @@ class App {
                 this.updateStartButton();
             });
         }
+        
+        // Mode selection handlers
+        if (this.fastMode) {
+            this.fastMode.addEventListener('change', () => {
+                if (this.fastMode.checked) {
+                    this.cleaningMode = 'fast';
+                    this.updateModeUI();
+                }
+            });
+        }
+        if (this.smartMode) {
+            this.smartMode.addEventListener('change', () => {
+                if (this.smartMode.checked) {
+                    this.cleaningMode = 'smart';
+                    this.updateModeUI();
+                }
+            });
+        }
+        
+        // Cancel button handler
+        if (this.cancelBtn) {
+            this.cancelBtn.addEventListener('click', () => {
+                this.smartCleaner.cancel();
+                this.hideProgress();
+                this.showToast('Smart Clean cancelled', 'error');
+            });
+        }
+    }
+    
+    updateModeUI() {
+        if (this.cleaningMode === 'smart') {
+            if (this.smartModeWarning) {
+                this.smartModeWarning.style.display = 'flex';
+            }
+            if (this.modeNote) {
+                this.modeNote.textContent = 'Smart Clean mode selected (AI-powered)';
+            }
+        } else {
+            if (this.smartModeWarning) {
+                this.smartModeWarning.style.display = 'none';
+            }
+            if (this.modeNote) {
+                this.modeNote.textContent = 'Fast Clean mode selected';
+            }
+        }
+        this.hideProgress();
+    }
+    
+    updateProgress(percent, text) {
+        if (this.progressBar) {
+            this.progressBar.style.width = `${percent}%`;
+        }
+        if (this.progressText) {
+            this.progressText.textContent = text || 'Processing...';
+        }
+        if (this.smartProgress) {
+            this.smartProgress.style.display = 'block';
+        }
+        if (this.cancelBtn && percent > 0 && percent < 100) {
+            this.cancelBtn.style.display = 'block';
+        }
+    }
+    
+    hideProgress() {
+        if (this.smartProgress) {
+            this.smartProgress.style.display = 'none';
+        }
+        if (this.progressBar) {
+            this.progressBar.style.width = '0%';
+        }
+        if (this.cancelBtn) {
+            this.cancelBtn.style.display = 'none';
+        }
     }
 
     handleFiles(files) {
@@ -522,7 +1036,9 @@ class App {
             return;
         }
 
-        // Get current settings from checkboxes
+        const useSmartMode = this.cleaningMode === 'smart';
+        
+        // Get current settings from checkboxes (used for both Fast and Smart modes)
         const settings = {
             removeEmptyLines: this.removeEmptyLines ? this.removeEmptyLines.checked : true,
             removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
@@ -532,11 +1048,16 @@ class App {
             preserveParagraphSpacing: this.preserveParagraphSpacing ? this.preserveParagraphSpacing.checked : true,
         };
 
-        // Create new stripper instance with current settings
+        // Create new stripper instance with current settings (for Fast mode or fallback)
         this.stripper = new DocStripper(settings);
 
         this.resultsSection.style.display = 'block';
         this.resultsContainer.innerHTML = '<div class="loading">Processing files...</div>';
+        
+        // Disable start button during processing
+        if (this.startBtn) {
+            this.startBtn.disabled = true;
+        }
         
         // Scroll to results
         setTimeout(() => {
@@ -553,17 +1074,57 @@ class App {
             punctuationLinesRemoved: 0,
         };
 
-        for (const file of this.files) {
-            const result = await this.stripper.processFile(file);
-            results.push(result);
-            
-            if (result.success) {
-                totalStats.filesProcessed++;
-                totalStats.linesRemoved += result.stats.linesRemoved;
-                totalStats.duplicatesCollapsed += result.stats.duplicatesCollapsed;
-                totalStats.emptyLinesRemoved += result.stats.emptyLinesRemoved;
-                totalStats.headerFooterRemoved += result.stats.headerFooterRemoved;
-                totalStats.punctuationLinesRemoved += result.stats.punctuationLinesRemoved || 0;
+        try {
+            for (const file of this.files) {
+                let result;
+                
+                if (useSmartMode) {
+                    try {
+                        // Use Smart Cleaner with current settings
+                        const text = await this.stripper.readTextFile(file);
+                        const cleanedResult = await this.smartCleaner.cleanText(text, settings);
+                        
+                        result = {
+                            fileName: file.name,
+                            originalText: text,
+                            cleanedText: cleanedResult.text,
+                            stats: cleanedResult.stats,
+                            success: true,
+                            mode: 'smart'
+                        };
+                    } catch (smartError) {
+                        console.warn('Smart clean failed, falling back to Fast clean:', smartError);
+                        // Fallback to Fast Clean
+                        this.showToast('Smart Clean unavailable, using Fast Clean', 'error');
+                        result = await this.stripper.processFile(file);
+                        if (result.success) {
+                            result.mode = 'fast-fallback';
+                        }
+                    }
+                } else {
+                    // Use Fast Cleaner
+                    result = await this.stripper.processFile(file);
+                    if (result.success) {
+                        result.mode = 'fast';
+                    }
+                }
+                
+                results.push(result);
+                
+                if (result.success) {
+                    totalStats.filesProcessed++;
+                    totalStats.linesRemoved += result.stats.linesRemoved;
+                    totalStats.duplicatesCollapsed += result.stats.duplicatesCollapsed || 0;
+                    totalStats.emptyLinesRemoved += result.stats.emptyLinesRemoved || 0;
+                    totalStats.headerFooterRemoved += result.stats.headerFooterRemoved || 0;
+                    totalStats.punctuationLinesRemoved += result.stats.punctuationLinesRemoved || 0;
+                }
+            }
+        } finally {
+            // Hide progress and re-enable button
+            this.hideProgress();
+            if (this.startBtn) {
+                this.startBtn.disabled = false;
             }
         }
 
