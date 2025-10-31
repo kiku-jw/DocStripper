@@ -1,11 +1,10 @@
-<!--
-.github/workflows is a special directory for GitHub Actions.
-This file shows a basic CI workflow example.
--->
+# GitHub Actions Workflows
 
-# GitHub Actions Workflow Example
+This directory can contain GitHub Actions workflows for automated testing and deployment.
 
-This repository can use GitHub Actions for automated testing. Here's a basic example:
+## Example Workflow
+
+Here's a basic CI workflow example (create `.github/workflows/ci.yml`):
 
 ```yaml
 name: CI
@@ -31,5 +30,9 @@ jobs:
         python tool.py --dry-run examples/before_after.txt
 ```
 
-This is just an example. You can add this workflow by creating `.github/workflows/ci.yml`.
+## GitHub Pages Deployment
 
+GitHub Pages is configured to deploy from the `/docs` folder automatically. No workflow needed!
+
+Just enable Pages in repository settings:
+- Settings → Pages → Source: `main` branch, `/docs` folder
