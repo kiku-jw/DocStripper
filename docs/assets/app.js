@@ -18,7 +18,7 @@ class DocStripper {
             /^\d+\s+of\s+\d+$/i,
             /^Page\s+\d+$/i,
             /^Página\s+\d+\s+de\s+\d+$/i, // Spanish
-            /^Страница\s+\d+\s+из\s+\d+$/i, // Russian
+            /^Страница\s+\d+\s+из\s+\d+$/i, // Russian "Page X of Y"
             /^Confidential$/i,
             /^CONFIDENTIAL$/i,
             /^DRAFT$/i,
