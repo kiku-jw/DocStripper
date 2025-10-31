@@ -1,15 +1,36 @@
 // DocStripper Web App - JavaScript Implementation
 
 class DocStripper {
-    constructor() {
+    constructor(options = {}) {
+        // Default options - all enabled
+        this.options = {
+            removeEmptyLines: options.removeEmptyLines !== false,
+            removePageNumbers: options.removePageNumbers !== false,
+            removeHeadersFooters: options.removeHeadersFooters !== false,
+            removeDuplicates: options.removeDuplicates !== false,
+        };
+        
+        // Enhanced header/footer patterns
         this.headerPatterns = [
             /^Page\s+\d+\s+of\s+\d+$/i,
             /^\d+\s+of\s+\d+$/i,
             /^Page\s+\d+$/i,
+            /^Página\s+\d+\s+de\s+\d+$/i, // Spanish
+            /^Страница\s+\d+\s+из\s+\d+$/i, // Russian
             /^Confidential$/i,
-            /^DRAFT$/i,
             /^CONFIDENTIAL$/i,
+            /^DRAFT$/i,
             /^Draft$/i,
+            /^INTERNAL$/i,
+            /^Internal$/i,
+            /^PRIVATE$/i,
+            /^Private$/i,
+            /^RESTRICTED$/i,
+            /^Restricted$/i,
+            /^CLASSIFIED$/i,
+            /^Classified$/i,
+            /^FOR INTERNAL USE ONLY$/i,
+            /^DO NOT DISTRIBUTE$/i,
         ];
     }
 
@@ -41,26 +62,31 @@ class DocStripper {
             const line = lines[i];
             const stripped = line.trim();
 
-            // Skip empty or whitespace-only lines
+            // Skip empty or whitespace-only lines (if enabled)
             if (!stripped) {
-                stats.emptyLinesRemoved++;
-                continue;
+                if (this.options.removeEmptyLines) {
+                    stats.emptyLinesRemoved++;
+                    continue;
+                } else {
+                    cleanedLines.push(line);
+                    continue;
+                }
             }
 
-            // Skip page numbers
-            if (this.isPageNumber(stripped)) {
+            // Skip page numbers (if enabled)
+            if (this.options.removePageNumbers && this.isPageNumber(stripped)) {
                 stats.headerFooterRemoved++;
                 continue;
             }
 
-            // Skip headers/footers
-            if (this.isHeaderFooter(stripped)) {
+            // Skip headers/footers (if enabled)
+            if (this.options.removeHeadersFooters && this.isHeaderFooter(stripped)) {
                 stats.headerFooterRemoved++;
                 continue;
             }
 
-            // Skip consecutive duplicates
-            if (prevLine !== null && stripped === prevLine.trim()) {
+            // Skip consecutive duplicates (if enabled)
+            if (this.options.removeDuplicates && prevLine !== null && stripped === prevLine.trim()) {
                 stats.duplicatesCollapsed++;
                 continue;
             }
@@ -161,7 +187,13 @@ class DocStripper {
 // UI Management
 class App {
     constructor() {
-        this.stripper = new DocStripper();
+        // Initialize with default settings (all enabled)
+        this.stripper = new DocStripper({
+            removeEmptyLines: true,
+            removePageNumbers: true,
+            removeHeadersFooters: true,
+            removeDuplicates: true,
+        });
         this.files = [];
         this.results = [];
         this.initializeElements();
@@ -174,6 +206,12 @@ class App {
         this.fileList = document.getElementById('fileList');
         this.resultsSection = document.getElementById('resultsSection');
         this.resultsContainer = document.getElementById('resultsContainer');
+        
+        // Settings checkboxes
+        this.removeEmptyLines = document.getElementById('removeEmptyLines');
+        this.removePageNumbers = document.getElementById('removePageNumbers');
+        this.removeHeadersFooters = document.getElementById('removeHeadersFooters');
+        this.removeDuplicates = document.getElementById('removeDuplicates');
         
         // Check if elements exist
         if (!this.uploadArea || !this.fileInput) {
@@ -296,6 +334,36 @@ class App {
         this.fileInput.addEventListener('change', (e) => {
             this.handleFiles(e.target.files);
         });
+        
+        // Settings change - reprocess files when settings change
+        if (this.removeEmptyLines) {
+            this.removeEmptyLines.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        if (this.removePageNumbers) {
+            this.removePageNumbers.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        if (this.removeHeadersFooters) {
+            this.removeHeadersFooters.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        if (this.removeDuplicates) {
+            this.removeDuplicates.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
     }
 
     handleFiles(files) {
@@ -361,8 +429,24 @@ class App {
             return;
         }
 
+        // Get current settings from checkboxes
+        const settings = {
+            removeEmptyLines: this.removeEmptyLines ? this.removeEmptyLines.checked : true,
+            removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
+            removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true,
+            removeDuplicates: this.removeDuplicates ? this.removeDuplicates.checked : true,
+        };
+
+        // Create new stripper instance with current settings
+        this.stripper = new DocStripper(settings);
+
         this.resultsSection.style.display = 'block';
         this.resultsContainer.innerHTML = '<div class="loading">Processing files...</div>';
+        
+        // Scroll to results
+        setTimeout(() => {
+            this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
 
         const results = [];
         let totalStats = {

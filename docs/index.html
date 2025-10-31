@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocStripper - Batch Document Cleaner</title>
     <meta name="description" content="DocStripper - Remove noise from text documents automatically. Clean page numbers, headers, footers, duplicates, and empty lines.">
-    <link rel="stylesheet" href="assets/style.css?v=8">
+    <link rel="stylesheet" href="assets/style.css?v=9">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
 </head>
 <body>
@@ -44,6 +44,41 @@
                             <p class="upload-hint">Supports: .txt, .docx files</p>
                         </div>
                         <input type="file" id="fileInput" multiple accept=".txt,.docx" class="file-input-hidden">
+                    </div>
+
+                    <!-- Cleaning Settings -->
+                    <div class="settings-section" id="settingsSection">
+                        <h3>Cleaning Options</h3>
+                        <div class="settings-grid">
+                            <label class="setting-item">
+                                <input type="checkbox" id="removeEmptyLines" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Empty Lines</span>
+                                    <span class="setting-desc">Remove blank and whitespace-only lines</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="removePageNumbers" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Page Numbers</span>
+                                    <span class="setting-desc">Remove lines with only digits (1, 2, 3...)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="removeHeadersFooters" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Headers/Footers</span>
+                                    <span class="setting-desc">Remove common patterns (Page X of Y, Confidential, etc.)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="removeDuplicates" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Duplicates</span>
+                                    <span class="setting-desc">Collapse consecutive identical lines</span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                     <div id="fileList" class="file-list"></div>
@@ -224,6 +259,6 @@ Empty line above.</code></pre>
         </div>
     </footer>
 
-    <script src="assets/app.js?v=8"></script>
+    <script src="assets/app.js?v=9"></script>
 </body>
 </html>
