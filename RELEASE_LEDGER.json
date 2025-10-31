@@ -1,0 +1,12 @@
+{
+  "releases": [
+    {
+      "version": "1.0.0",
+      "date": "2024-12-20",
+      "name": "DocStripper — Batch document cleaner",
+      "schema_signature": "CLI_TOOL",
+      "hash_salt": "222a49fa07"
+    }
+  ]
+}
+
