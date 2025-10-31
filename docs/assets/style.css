@@ -109,15 +109,16 @@ body {
 
 /* Upload Section */
 .upload-section {
-    padding: 3rem 0;
+    padding: 4rem 0 3rem;
+    background: linear-gradient(to bottom, var(--background) 0%, var(--surface) 100%);
 }
 
 .upload-card {
-    background: var(--surface);
-    padding: 3rem;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px var(--shadow);
-    max-width: 900px;
+    background: var(--background);
+    padding: 3.5rem;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px var(--shadow-lg);
+    max-width: 950px;
     margin: 0 auto;
     border: 1px solid var(--border);
     transition: all 0.3s ease;
@@ -140,15 +141,15 @@ body {
 }
 
 .upload-area {
-    border: 3px dashed var(--upload-border);
-    border-radius: 16px;
-    padding: 4rem 2rem;
+    border: 4px dashed var(--upload-border);
+    border-radius: 20px;
+    padding: 5rem 2rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     background: var(--upload-bg);
-    margin-bottom: 1.5rem;
-    min-height: 220px;
+    margin-bottom: 2rem;
+    min-height: 250px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -173,10 +174,11 @@ body {
 }
 
 .upload-icon {
-    font-size: 5rem;
-    margin-bottom: 1.5rem;
-    filter: grayscale(0.3);
+    font-size: 6rem;
+    margin-bottom: 2rem;
+    filter: grayscale(0.2);
     transition: transform 0.3s ease;
+    opacity: 0.8;
 }
 
 .upload-area:hover .upload-icon {
@@ -184,14 +186,15 @@ body {
 }
 
 .upload-text {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     color: var(--text);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    font-weight: 500;
 }
 
 .upload-main-text {
