@@ -3,13 +3,13 @@
   
   # 🧹 DocStripper
   
-  > **Batch document cleaner** — Remove noise from text documents automatically
+  > **AI-powered batch document cleaner** — Remove noise from text documents automatically with Fast or Smart Clean modes
 </div>
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 
-**DocStripper** automatically cleans text documents by removing page numbers, headers/footers, duplicate lines, and empty lines.
+**DocStripper** automatically cleans text documents by removing page numbers, headers/footers, duplicate lines, and empty lines. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM).
 
 **🌐 [Try it online →](https://kiku-jw.github.io/DocStripper2/)** — No installation needed!
 
