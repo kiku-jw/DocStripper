@@ -75,10 +75,11 @@ Important content here.
 
 ## 🎨 What Gets Removed?
 
-- **Page numbers** — Lines with only digits (1, 2, 3...)
-- **Headers/Footers** — Common patterns like "Page X of Y", "Confidential", "DRAFT"
+- **Page numbers** — Lines with only digits (1, 2, 3...), Roman numerals (I, II, III), or letters (A, B, C)
+- **Headers/Footers** — Common patterns like "Page X of Y", "Confidential", "DRAFT", "INTERNAL USE ONLY"
 - **Duplicate lines** — Consecutive identical lines
-- **Empty lines** — Whitespace-only lines
+- **Empty lines** — Whitespace-only lines (optional: preserve paragraph spacing)
+- **Punctuation lines** — Lines with only symbols (---, ***, ===)
 
 ---
 

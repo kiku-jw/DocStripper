@@ -5,10 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-XX
+
+### Added
+- 🌐 **Web Application** - Interactive web interface hosted on GitHub Pages
+- ⚙️ **Customizable Cleaning Options** - Configurable settings for each cleaning type
+- 🎨 **Dark Theme Support** - Toggle between light and dark themes
+- 📱 **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
+- 🔄 **Manual Start Workflow** - Upload → Configure → Start → Results workflow
+- 📊 **Real-time Statistics** - Live statistics showing what was removed
+- 🚀 **Enhanced Page Number Detection** - Support for Roman numerals (I, II, III) and letters (A, B, C)
+- 🔤 **Punctuation Line Removal** - Remove lines with only symbols (---, ***, ===)
+- 📝 **Paragraph Spacing Preservation** - Option to keep one empty line between paragraphs
+- 🌍 **Multi-language Header Patterns** - Support for Spanish and Russian page headers
+- 📥 **Download Functionality** - Download cleaned files with proper naming
+- 📋 **Copy to Clipboard** - Quick copy functionality for cleaned text
+
+### Improved
+- Better header/footer pattern detection (INTERNAL USE ONLY, PROPRIETARY, etc.)
+- Enhanced user experience with smooth scrolling and visual feedback
+- Improved Chrome compatibility for file input
+- Better error handling and user feedback
+
+### Technical
+- Client-side processing using JavaScript (FileReader API, JSZip)
+- No server-side processing - 100% privacy
+- Cache-busting for reliable updates
+- Automatic copyright year update
+
 ## [1.0.0] - 2024-12-20
 
 ### Added
-- Initial release of DocStripper
+- Initial release of DocStripper CLI tool
 - Support for `.txt`, `.docx`, and `.pdf` files
 - Automatic removal of duplicate consecutive lines
 - Page number detection and removal
