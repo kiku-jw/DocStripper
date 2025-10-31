@@ -195,20 +195,43 @@ class App {
             fileInputLabel.style.height = '100%';
             fileInputLabel.style.cursor = 'pointer';
             fileInputLabel.style.zIndex = '1';
+            // Ensure label is clickable
+            fileInputLabel.style.pointerEvents = 'auto';
         }
         
-        // Also handle clicks on upload area as fallback
+        // Direct click handler on upload area as primary method
         this.uploadArea.addEventListener('click', (e) => {
             // Don't trigger if clicking on remove button or other interactive elements
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            // Trigger file input click if label didn't work
-            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('label')) {
-                // Use setTimeout for better compatibility
+            // Trigger file input click directly
+            if (this.fileInput && e.target !== this.fileInput) {
+                // Small delay to ensure event propagation
                 setTimeout(() => {
-                    this.fileInput.click();
-                }, 0);
+                    try {
+                        this.fileInput.click();
+                    } catch (err) {
+                        console.error('Error opening file dialog:', err);
+                    }
+                }, 10);
+            }
+        });
+        
+        // Also handle mousedown for better compatibility
+        this.uploadArea.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
+                return;
+            }
+            if (this.fileInput && e.target !== this.fileInput) {
+                e.preventDefault();
+                setTimeout(() => {
+                    try {
+                        this.fileInput.click();
+                    } catch (err) {
+                        console.error('Error opening file dialog:', err);
+                    }
+                }, 10);
             }
         });
 
