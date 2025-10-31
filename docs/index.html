@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocStripper - Batch Document Cleaner</title>
     <meta name="description" content="DocStripper - Remove noise from text documents automatically. Clean page numbers, headers, footers, duplicates, and empty lines.">
-    <link rel="stylesheet" href="assets/style.css?v=4">
+    <link rel="stylesheet" href="assets/style.css?v=5">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
 </head>
 <body>
@@ -43,11 +43,9 @@
                             </p>
                             <p class="upload-hint">Supports: .txt, .docx files</p>
                         </div>
-                        <input type="file" id="fileInput" multiple accept=".txt,.docx" style="display: none;">
-                    </div>
-
-                    <div class="upload-options">
-                        <button class="btn btn-secondary" id="clearBtn" style="display: none;">Clear All</button>
+                        <label for="fileInput" class="file-input-label">
+                            <input type="file" id="fileInput" multiple accept=".txt,.docx" style="position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden;">
+                        </label>
                     </div>
 
                     <div id="fileList" class="file-list"></div>
@@ -180,6 +178,6 @@ Empty line above.</code></pre>
         </div>
     </footer>
 
-    <script src="assets/app.js?v=4"></script>
+    <script src="assets/app.js?v=5"></script>
 </body>
 </html>

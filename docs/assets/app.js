@@ -174,7 +174,6 @@ class App {
         this.fileList = document.getElementById('fileList');
         this.resultsSection = document.getElementById('resultsSection');
         this.resultsContainer = document.getElementById('resultsContainer');
-        this.clearBtn = document.getElementById('clearBtn');
         
         // Check if elements exist
         if (!this.uploadArea || !this.fileInput) {
@@ -184,30 +183,34 @@ class App {
     }
 
     setupEventListeners() {
-        // Click to upload - ensure it works even if upload-content is clicked
+        // Click to upload - use label approach for better browser compatibility
+        // The label wraps the file input, so clicking anywhere on upload area triggers it
+        const fileInputLabel = this.uploadArea.querySelector('.file-input-label');
+        if (fileInputLabel) {
+            // Make label cover entire upload area
+            fileInputLabel.style.position = 'absolute';
+            fileInputLabel.style.top = '0';
+            fileInputLabel.style.left = '0';
+            fileInputLabel.style.width = '100%';
+            fileInputLabel.style.height = '100%';
+            fileInputLabel.style.cursor = 'pointer';
+            fileInputLabel.style.zIndex = '1';
+        }
+        
+        // Also handle clicks on upload area as fallback
         this.uploadArea.addEventListener('click', (e) => {
             // Don't trigger if clicking on remove button or other interactive elements
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            // Trigger file input click
-            if (this.fileInput) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.fileInput.click();
+            // Trigger file input click if label didn't work
+            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('label')) {
+                // Use setTimeout for better compatibility
+                setTimeout(() => {
+                    this.fileInput.click();
+                }, 0);
             }
         });
-        
-        // Also make upload-content clickable (bypass pointer-events: none)
-        const uploadContent = this.uploadArea.querySelector('.upload-content');
-        if (uploadContent) {
-            uploadContent.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (this.fileInput) {
-                    this.fileInput.click();
-                }
-            });
-        }
 
         // Drag and drop
         this.uploadArea.addEventListener('dragover', (e) => {
@@ -228,11 +231,6 @@ class App {
         // File input change
         this.fileInput.addEventListener('change', (e) => {
             this.handleFiles(e.target.files);
-        });
-
-        // Clear button
-        this.clearBtn.addEventListener('click', () => {
-            this.clearAll();
         });
     }
 
@@ -259,11 +257,9 @@ class App {
     updateFileList() {
         if (this.files.length === 0) {
             this.fileList.innerHTML = '';
-            this.clearBtn.style.display = 'none';
             return;
         }
 
-        this.clearBtn.style.display = 'inline-block';
         this.fileList.innerHTML = '<h3>Uploaded Files:</h3>';
         
         this.files.forEach((file, index) => {
@@ -279,7 +275,13 @@ class App {
                 this.files.splice(index, 1);
                 this.updateFileList();
                 if (this.files.length === 0) {
-                    this.clearAll();
+                    this.files = [];
+                    this.results = [];
+                    if (this.fileInput) {
+                        this.fileInput.value = '';
+                    }
+                    this.updateFileList();
+                    this.resultsSection.style.display = 'none';
                 } else {
                     this.processFiles();
                 }
@@ -425,15 +427,35 @@ class App {
     }
 
     downloadFile(result) {
-        const blob = new Blob([result.cleanedText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = result.fileName.replace(/\.(txt|docx)$/, '_cleaned.txt');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            const blob = new Blob([result.cleanedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            // Get original filename and extension
+            const originalName = result.fileName;
+            const nameWithoutExt = originalName.replace(/\.(txt|docx)$/i, '');
+            const downloadName = `${nameWithoutExt}_cleaned.txt`;
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = downloadName;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            
+            // Trigger download
+            a.click();
+            
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            this.showToast(`Downloaded: ${downloadName}`);
+        } catch (error) {
+            console.error('Download error:', error);
+            this.showToast('Failed to download file', 'error');
+        }
     }
 
     copyToClipboard(text) {
@@ -456,21 +478,6 @@ class App {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         }, 3000);
-    }
-
-    clearAll() {
-        if (this.files.length === 0) {
-            return;
-        }
-        
-        this.files = [];
-        this.results = [];
-        if (this.fileInput) {
-            this.fileInput.value = '';
-        }
-        this.updateFileList();
-        this.resultsSection.style.display = 'none';
-        this.showToast('All files cleared');
     }
 
     formatFileSize(bytes) {
