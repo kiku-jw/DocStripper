@@ -392,6 +392,15 @@ class App {
             this.handleFiles(e.target.files);
         });
         
+        // Start button click
+        if (this.startBtn) {
+            this.startBtn.addEventListener('click', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        
         // Settings change - update start button state (don't reprocess automatically)
         if (this.removeEmptyLines) {
             this.removeEmptyLines.addEventListener('change', () => {
