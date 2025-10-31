@@ -379,25 +379,27 @@ class SmartCleaner {
         const chunks = [];
         let currentChunk = [];
         let currentSize = 0;
+        let globalLineIndex = 0;
 
         for (let i = 0; i < lines.length; i++) {
             const lineSize = lines[i].length + 1; // +1 for newline
             if (currentSize + lineSize > maxChunkSize && currentChunk.length > 0) {
                 chunks.push({
                     lines: currentChunk,
-                    startIndex: chunks.length === 0 ? 0 : chunks[chunks.length - 1].startIndex + chunks[chunks.length - 1].lines.length
+                    startIndex: globalLineIndex - currentChunk.length
                 });
                 currentChunk = [];
                 currentSize = 0;
             }
             currentChunk.push(lines[i]);
             currentSize += lineSize;
+            globalLineIndex++;
         }
 
         if (currentChunk.length > 0) {
             chunks.push({
                 lines: currentChunk,
-                startIndex: chunks.length === 0 ? 0 : chunks[chunks.length - 1].startIndex + chunks[chunks.length - 1].lines.length
+                startIndex: globalLineIndex - currentChunk.length
             });
         }
 
@@ -617,6 +619,11 @@ Respond with JSON only:`;
             const textLength = text.length;
             const maxChunkSize = textLength > 50000 ? 4000 : textLength > 20000 ? 3500 : 3000;
             const chunks = this.chunkText(text, maxChunkSize);
+            
+            if (chunks.length === 0) {
+                return { text: text, stats: this.getEmptyStats() };
+            }
+            
             let result = [];
             const stats = {
                 linesRemoved: 0,
@@ -639,7 +646,7 @@ Respond with JSON only:`;
                 const batchEnd = Math.min(batchStart + batchSize, totalChunks);
                 const batch = chunks.slice(batchStart, batchEnd);
                 
-                // Process batch in parallel
+                // Process batch in parallel, preserving order
                 const batchPromises = batch.map(async (chunk, batchIdx) => {
                     const chunkIdx = batchStart + batchIdx;
                     const progressPercent = Math.floor((chunkIdx / totalChunks) * 100);
@@ -662,19 +669,26 @@ Respond with JSON only:`;
 
                         if (!plan) {
                             console.warn(`Failed to parse LLM response for chunk ${chunkIdx + 1}, using original chunk`);
-                            return chunk.lines.join('\n');
+                            return { index: chunkIdx, text: chunk.lines.join('\n') };
                         } else {
-                            return this.applyPlan(chunk, plan);
+                            return { index: chunkIdx, text: this.applyPlan(chunk, plan) };
                         }
                     } catch (error) {
                         console.error(`Error processing chunk ${chunkIdx + 1}:`, error);
-                        return chunk.lines.join('\n'); // Fallback to original
+                        return { index: chunkIdx, text: chunk.lines.join('\n') }; // Fallback to original
                     }
                 });
 
-                // Wait for batch to complete
+                // Wait for batch to complete (Promise.all preserves order)
                 const batchResults = await Promise.all(batchPromises);
-                result.push(...batchResults);
+                
+                // Sort by index to ensure correct order (extra safety)
+                batchResults.sort((a, b) => a.index - b.index);
+                
+                // Add results in order
+                for (const batchResult of batchResults) {
+                    result.push(batchResult.text);
+                }
 
                 // Small delay between batches to prevent UI freezing
                 if (batchEnd < totalChunks) {
@@ -685,6 +699,12 @@ Respond with JSON only:`;
             const cleanedText = result.join('\n');
             const cleanedLineCount = cleanedText.split('\n').length;
             stats.linesRemoved = originalLineCount - cleanedLineCount;
+
+            // Validate result is not empty
+            if (!cleanedText.trim() && text.trim()) {
+                console.warn('Smart clean produced empty result, using original text');
+                return { text: text, stats: this.getEmptyStats() };
+            }
 
             return {
                 text: cleanedText,
