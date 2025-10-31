@@ -1,0 +1,18 @@
+EDGE CASE: VERY LONG DUPLICATE LINES
+
+This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents. This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents.
+This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents. This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents.
+This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents. This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents.
+This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents. This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents.
+This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents. This is a very long line of text that repeats many times to test how the system handles long duplicate lines in documents.
+
+1
+
+2
+
+3
+
+4
+
+5
+

@@ -29,6 +29,15 @@ class DocStripper:
         r'^DRAFT$',
         r'^CONFIDENTIAL$',
         r'^Draft$',
+        # Compound headers with dashes
+        r'^CONFIDENTIAL\s*-\s*INTERNAL\s+USE\s+ONLY$',
+        r'^Confidential\s*-\s*Internal\s+Use\s+Only$',
+        r'^DRAFT\s*-\s*NOT\s+FOR\s+DISTRIBUTION$',
+        r'^Draft\s*-\s*Not\s+for\s+Distribution$',
+        r'^INTERNAL\s+USE\s+ONLY$',
+        r'^Internal\s+Use\s+Only$',
+        r'^FOR\s+INTERNAL\s+USE\s+ONLY$',
+        r'^FOR\s+INTERNAL\s+USE$',
     ]
     
     def __init__(self, dry_run: bool = False):
@@ -40,6 +49,7 @@ class DocStripper:
             'duplicates_collapsed': 0,
             'empty_lines_removed': 0,
             'header_footer_removed': 0,
+            'punctuation_lines_removed': 0,
         }
         self.undo_data = []
     
@@ -126,6 +136,15 @@ class DocStripper:
         # Check if it's only digits (possibly with spaces or punctuation)
         return bool(re.match(r'^\s*\d+\s*$', stripped))
     
+    def is_punctuation_only(self, line: str) -> bool:
+        """Check if line contains only punctuation characters."""
+        stripped = line.strip()
+        if not stripped:
+            return False
+        # Lines with only punctuation: ---, ***, ===, etc.
+        # Match non-word, non-space characters, max 50 chars
+        return bool(re.match(r'^[^\w\s]+$', stripped)) and len(stripped) <= 50
+    
     def is_header_footer(self, line: str) -> bool:
         """Check if line matches common header/footer patterns."""
         stripped = line.strip()
@@ -147,6 +166,7 @@ class DocStripper:
             'duplicates_collapsed': 0,
             'empty_lines_removed': 0,
             'header_footer_removed': 0,
+            'punctuation_lines_removed': 0,
         }
         
         for line in lines:
@@ -156,6 +176,11 @@ class DocStripper:
             # Skip empty or whitespace-only lines
             if not stripped:
                 local_stats['empty_lines_removed'] += 1
+                continue
+            
+            # Skip punctuation-only lines (---, ***, ===, etc.)
+            if self.is_punctuation_only(stripped):
+                local_stats['punctuation_lines_removed'] += 1
                 continue
             
             # Skip page numbers
@@ -203,6 +228,7 @@ class DocStripper:
         self.stats['duplicates_collapsed'] += stats['duplicates_collapsed']
         self.stats['empty_lines_removed'] += stats['empty_lines_removed']
         self.stats['header_footer_removed'] += stats['header_footer_removed']
+        self.stats['punctuation_lines_removed'] += stats.get('punctuation_lines_removed', 0)
         
         # Show what would be changed
         if text != cleaned_text:
@@ -210,6 +236,8 @@ class DocStripper:
             print(f"  - Duplicates collapsed: {stats['duplicates_collapsed']}")
             print(f"  - Empty lines removed: {stats['empty_lines_removed']}")
             print(f"  - Headers/footers removed: {stats['header_footer_removed']}")
+            if stats.get('punctuation_lines_removed', 0) > 0:
+                print(f"  - Punctuation lines removed: {stats['punctuation_lines_removed']}")
         
         # Save original for undo
         if not self.dry_run:
@@ -272,6 +300,8 @@ class DocStripper:
         print(f"Duplicates collapsed: {self.stats['duplicates_collapsed']}")
         print(f"Empty lines removed: {self.stats['empty_lines_removed']}")
         print(f"Headers/footers removed: {self.stats['header_footer_removed']}")
+        if self.stats.get('punctuation_lines_removed', 0) > 0:
+            print(f"Punctuation lines removed: {self.stats['punctuation_lines_removed']}")
         if not self.dry_run:
             print(f"\nLog saved to: {self.log_file}")
             print("Backup files created with .bak extension")

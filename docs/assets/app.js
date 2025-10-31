@@ -37,6 +37,14 @@ class DocStripper {
             /^DO NOT DISTRIBUTE$/i,
             /^PROPRIETARY$/i,
             /^Proprietary$/i,
+            // Compound headers with dashes
+            /^CONFIDENTIAL\s*-\s*INTERNAL\s+USE\s+ONLY$/i,
+            /^Confidential\s*-\s*Internal\s+Use\s+Only$/i,
+            /^DRAFT\s*-\s*NOT\s+FOR\s+DISTRIBUTION$/i,
+            /^Draft\s*-\s*Not\s+for\s+Distribution$/i,
+            /^STRICTLY\s+CONFIDENTIAL$/i,
+            /^TOP\s+SECRET$/i,
+            /^PROPRIETARY\s+AND\s+CONFIDENTIAL$/i,
         ];
     }
 

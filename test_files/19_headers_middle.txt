@@ -1,0 +1,5 @@
+EDGE CASE: HEADERS IN MIDDLE OF TEXT
+This is normal content.
+This is also normal content in the middle.
+More content here.
+Even more content.
