@@ -191,6 +191,8 @@ class App {
         this.fileInput.style.cursor = 'pointer';
         this.fileInput.style.zIndex = '10';
         this.fileInput.style.fontSize = '0';
+        this.fileInput.style.pointerEvents = 'auto'; // Chrome compatibility
+        this.fileInput.setAttribute('tabindex', '-1'); // Make it focusable but not in tab order
         
         // Ensure upload area has overflow hidden
         this.uploadArea.style.overflow = 'hidden';
@@ -203,43 +205,76 @@ class App {
     }
 
     setupEventListeners() {
-        // File input is positioned absolutely over upload area, so clicking anywhere opens it
-        // Also handle direct clicks on upload area as fallback
+        // Chrome requires direct user interaction - make file input directly clickable
+        // Ensure file input accepts clicks directly
+        this.fileInput.addEventListener('click', (e) => {
+            // Allow normal file input behavior
+            e.stopPropagation();
+        });
+        
+        // Handle clicks on upload area - Chrome compatibility
         this.uploadArea.addEventListener('click', (e) => {
             // Don't trigger if clicking on remove button or other interactive elements
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            // If click is not on file input itself, trigger it
-            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('input[type="file"]')) {
-                // Use setTimeout for better compatibility
-                setTimeout(() => {
-                    try {
-                        this.fileInput.click();
-                    } catch (err) {
-                        console.error('Error opening file dialog:', err);
-                    }
-                }, 10);
+            
+            // If click is directly on file input, allow it
+            if (e.target === this.fileInput || e.target.closest('input[type="file"]')) {
+                return;
+            }
+            
+            // For Chrome: use direct click without setTimeout
+            if (this.fileInput) {
+                // Try direct click first (works in most browsers)
+                try {
+                    this.fileInput.click();
+                } catch (err) {
+                    // Fallback: trigger click event
+                    const clickEvent = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    this.fileInput.dispatchEvent(clickEvent);
+                }
             }
         });
         
-        // Also handle mousedown for better compatibility
+        // Also handle mousedown for Chrome - Chrome sometimes needs mousedown
         this.uploadArea.addEventListener('mousedown', (e) => {
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('input[type="file"]')) {
-                // Prevent default to avoid conflicts
-                e.preventDefault();
-                setTimeout(() => {
+            if (e.target === this.fileInput || e.target.closest('input[type="file"]')) {
+                return;
+            }
+            
+            // For Chrome: trigger click on mouseup (more reliable)
+            const handleMouseUp = () => {
+                if (this.fileInput) {
                     try {
+                        this.fileInput.focus();
                         this.fileInput.click();
                     } catch (err) {
                         console.error('Error opening file dialog:', err);
                     }
-                }, 10);
-            }
+                }
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            document.addEventListener('mouseup', handleMouseUp);
         });
+        
+        // Make upload-content clickable too (removes pointer-events: none issue)
+        const uploadContent = this.uploadArea.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.fileInput) {
+                    this.fileInput.click();
+                }
+            });
+        }
 
         // Drag and drop
         this.uploadArea.addEventListener('dragover', (e) => {
