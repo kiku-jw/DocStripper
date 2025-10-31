@@ -1,77 +1,76 @@
-# ИНСТРУКЦИЯ ПО ПУБЛИКАЦИИ
+# PUBLISHING INSTRUCTIONS
 
-## Шаги для публикации на GitHub:
+## Steps to publish on GitHub:
 
-1. **Создайте новый репозиторий на GitHub:**
-   - Перейдите на https://github.com/new
-   - Название репозитория: `DocStripper`
-   - Описание: "Batch document cleaner — удаляет мусор из текстовых документов"
-   - Выберите Public
-   - НЕ добавляйте README, .gitignore или лицензию (они уже есть)
-   - Нажмите "Create repository"
+1. **Create a new repository on GitHub:**
+   - Go to https://github.com/new
+   - Repository name: `DocStripper`
+   - Description: "Batch document cleaner — removes noise from text documents"
+   - Select Public
+   - DO NOT add README, .gitignore or license (they already exist)
+   - Click "Create repository"
 
-2. **Подключите локальный репозиторий к GitHub:**
+2. **Connect local repository to GitHub:**
    ```bash
    git remote add origin https://github.com/YOUR_USERNAME/DocStripper.git
    git branch -M main
    git push -u origin main
    ```
-   (Замените YOUR_USERNAME на ваш GitHub username)
+   (Replace YOUR_USERNAME with your GitHub username)
 
-3. **Создайте релиз v1.0.0:**
-   - Перейдите в раздел Releases на GitHub
-   - Нажмите "Create a new release"
+3. **Create v1.0.0 release:**
+   - Go to Releases section on GitHub
+   - Click "Create a new release"
    - Tag: `v1.0.0`
    - Release title: `DocStripper — Batch document cleaner`
-   - Описание:
+   - Description:
      ```
      ## DocStripper v1.0.0
      
-     Первый релиз DocStripper — утилиты для массовой очистки текстовых документов.
+     First release of DocStripper — utility for batch cleaning text documents.
      
-     ### Основные возможности:
-     - Удаление повторяющихся строк
-     - Удаление номеров страниц
-     - Удаление заголовков и подвалов
-     - Удаление пустых строк
-     - Поддержка .txt, .docx, .pdf файлов
-     - Режим dry-run
-     - Откат изменений
+     ### Main features:
+     - Remove duplicate lines
+     - Remove page numbers
+     - Remove headers and footers
+     - Remove empty lines
+     - Support for .txt, .docx, .pdf files
+     - Dry-run mode
+     - Undo changes
      
-     ### Технические детали:
+     ### Technical details:
      - Python 3.9+
-     - Только стандартная библиотека
-     - Кросс-платформенная поддержка
+     - Standard library only
+     - Cross-platform support
      
-     См. README.md для инструкций по установке и использованию.
+     See README.md for installation and usage instructions.
      ```
-   - Нажмите "Publish release"
+   - Click "Publish release"
 
-4. **Проверьте, что всё работает:**
+4. **Verify everything works:**
    ```bash
    python tool.py --help
    ```
 
-## Структура проекта:
+## Project structure:
 
 ```
 DocStripper/
-├── tool.py              # Основной файл утилиты
-├── README.md            # Документация с примерами
-├── CHANGELOG.md         # История изменений
+├── tool.py              # Main utility file
+├── README.md            # Documentation with examples
+├── CHANGELOG.md         # Change history
 ├── LICENSE.txt          # MIT License
-├── SELF_TESTS.md        # Тестовые случаи
-├── RELEASE_LEDGER.json  # Регистр релизов
-├── .gitignore          # Git ignore файл
+├── SELF_TESTS.md        # Test cases
+├── RELEASE_LEDGER.json  # Release registry
+├── .gitignore          # Git ignore file
 └── examples/
-    └── before_after.txt # Демонстрация работы
+    └── before_after.txt # Demonstration
 ```
 
-## Проверка готовности:
+## Readiness check:
 
-✅ Все файлы созданы
-✅ Git репозиторий инициализирован
-✅ tool.py работает корректно
-✅ README содержит 6 примеров использования
-✅ Готово к публикации!
-
+✅ All files created
+✅ Git repository initialized
+✅ tool.py works correctly
+✅ README contains 6 usage examples
+✅ Ready to publish!

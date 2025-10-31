@@ -1,45 +1,45 @@
 #!/bin/bash
-# Скрипт для публикации DocStripper на GitHub
+# Script for publishing DocStripper to GitHub
 
-echo "🚀 DocStripper - Скрипт публикации"
+echo "🚀 DocStripper - Publishing Script"
 echo "=================================="
 echo ""
 
-# Проверка Git
+# Check Git
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "❌ Ошибка: Git репозиторий не инициализирован"
+    echo "❌ Error: Git repository not initialized"
     exit 1
 fi
 
-echo "✅ Git репозиторий найден"
+echo "✅ Git repository found"
 echo ""
 
-# Проверка наличия remote
+# Check for remote
 if git remote get-url origin > /dev/null 2>&1; then
     REMOTE_URL=$(git remote get-url origin)
-    echo "📦 Удаленный репозиторий уже настроен: $REMOTE_URL"
+    echo "📦 Remote repository already configured: $REMOTE_URL"
     echo ""
-    read -p "Хотите добавить новый remote? (y/n): " -n 1 -r
+    read -p "Do you want to add a new remote? (y/n): " -n 1 -r
     echo ""
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Пропускаем настройку remote..."
+        echo "Skipping remote setup..."
     else
         git remote remove origin
     fi
 fi
 
-# Получение данных от пользователя
+# Get user input
 if ! git remote get-url origin > /dev/null 2>&1; then
-    echo "Введите данные для подключения к GitHub:"
+    echo "Enter GitHub connection details:"
     read -p "GitHub username: " GITHUB_USERNAME
-    read -p "Название репозитория [DocStripper]: " REPO_NAME
+    read -p "Repository name [DocStripper]: " REPO_NAME
     REPO_NAME=${REPO_NAME:-DocStripper}
     
     echo ""
-    echo "Выберите метод подключения:"
-    echo "1) HTTPS (рекомендуется)"
+    echo "Select connection method:"
+    echo "1) HTTPS (recommended)"
     echo "2) SSH"
-    read -p "Выбор [1]: " METHOD
+    read -p "Choice [1]: " METHOD
     METHOD=${METHOD:-1}
     
     if [ "$METHOD" = "1" ]; then
@@ -49,49 +49,48 @@ if ! git remote get-url origin > /dev/null 2>&1; then
     fi
     
     echo ""
-    echo "Добавляем remote: $REMOTE_URL"
+    echo "Adding remote: $REMOTE_URL"
     git remote add origin "$REMOTE_URL"
 fi
 
-# Переименование ветки в main если нужно
+# Rename branch to main if needed
 CURRENT_BRANCH=$(git branch --show-current)
 if [ "$CURRENT_BRANCH" != "main" ]; then
-    echo "Переименовываем ветку $CURRENT_BRANCH в main..."
+    echo "Renaming branch $CURRENT_BRANCH to main..."
     git branch -M main
 fi
 
-# Проверка статуса
+# Check status
 echo ""
-echo "📊 Текущий статус:"
+echo "📊 Current status:"
 git status --short
 
 echo ""
-echo "Готовы к публикации? Будут выполнены следующие команды:"
+echo "Ready to publish? The following commands will be executed:"
 echo "  git push -u origin main"
 echo ""
-read -p "Продолжить? (y/n): " -n 1 -r
+read -p "Continue? (y/n): " -n 1 -r
 echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🔄 Отправляем код на GitHub..."
+    echo "🔄 Pushing code to GitHub..."
     git push -u origin main
     
     if [ $? -eq 0 ]; then
         echo ""
-        echo "✅ Успешно опубликовано!"
+        echo "✅ Successfully published!"
         echo ""
         REMOTE_URL=$(git remote get-url origin)
         REPO_URL=$(echo "$REMOTE_URL" | sed 's/\.git$//')
-        echo "🔗 Откройте репозиторий: $REPO_URL"
+        echo "🔗 Open repository: $REPO_URL"
         echo ""
-        echo "Следующий шаг: создайте релиз v1.0.0 на GitHub"
-        echo "  Перейдите: $REPO_URL/releases/new"
+        echo "Next step: create v1.0.0 release on GitHub"
+        echo "  Go to: $REPO_URL/releases/new"
     else
         echo ""
-        echo "❌ Ошибка при публикации. Проверьте настройки и попробуйте снова."
+        echo "❌ Error during publishing. Check settings and try again."
         exit 1
     fi
 else
-    echo "Отменено."
+    echo "Cancelled."
 fi
-
