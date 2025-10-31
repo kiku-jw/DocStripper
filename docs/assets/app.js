@@ -243,6 +243,8 @@ class App {
             removePageNumbers: true,
             removeHeadersFooters: true,
             removeDuplicates: true,
+            removePunctuationLines: true,
+            preserveParagraphSpacing: true,
         });
         this.files = [];
         this.results = [];
@@ -409,6 +411,20 @@ class App {
         }
         if (this.removeDuplicates) {
             this.removeDuplicates.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        if (this.removePunctuationLines) {
+            this.removePunctuationLines.addEventListener('change', () => {
+                if (this.files.length > 0) {
+                    this.processFiles();
+                }
+            });
+        }
+        if (this.preserveParagraphSpacing) {
+            this.preserveParagraphSpacing.addEventListener('change', () => {
                 if (this.files.length > 0) {
                     this.processFiles();
                 }
