@@ -440,9 +440,40 @@ function loadJSZip() {
     });
 }
 
+// Theme Management
+class ThemeManager {
+    constructor() {
+        this.themeToggle = document.getElementById('themeToggle');
+        this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.init();
+    }
+
+    init() {
+        document.documentElement.setAttribute('data-theme', this.currentTheme);
+        this.updateIcon();
+        this.themeToggle.addEventListener('click', () => this.toggle());
+    }
+
+    toggle() {
+        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', this.currentTheme);
+        localStorage.setItem('theme', this.currentTheme);
+        this.updateIcon();
+    }
+
+    updateIcon() {
+        const icon = this.themeToggle.querySelector('.theme-icon');
+        icon.textContent = this.currentTheme === 'light' ? '🌙' : '☀️';
+    }
+}
+
 // Initialize app when DOM is ready
 async function init() {
     try {
+        // Initialize theme manager first
+        new ThemeManager();
+        
+        // Load JSZip and initialize app
         await loadJSZip();
         window.JSZip = JSZip;
         new App();

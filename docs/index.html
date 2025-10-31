@@ -12,24 +12,35 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <h1 class="logo">🧹 DocStripper</h1>
-                <p class="tagline">Batch document cleaner — Remove noise from text documents automatically</p>
+                <div class="header-main">
+                    <h1 class="logo">🧹 DocStripper</h1>
+                    <p class="tagline">Batch document cleaner — Remove noise from text documents automatically</p>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
             </div>
         </div>
     </header>
 
     <main class="main">
-        <!-- File Upload Section -->
+        <!-- Upload Section - Prominent at the top -->
         <section class="upload-section">
             <div class="container">
                 <div class="upload-card">
                     <h2>Upload Your Documents</h2>
-                    <p class="upload-description">Drop your files here or click to browse. All processing happens in your browser - your files never leave your computer!</p>
+                    <p class="upload-description">
+                        Drop your files here or click to browse. All processing happens in your browser — your files never leave your computer!
+                    </p>
                     
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-content">
                             <div class="upload-icon">📄</div>
-                            <p class="upload-text">Drop files here or <span class="upload-link">click to browse</span></p>
+                            <p class="upload-text">
+                                <span class="upload-main-text">Drop files here</span>
+                                <span class="upload-or">or</span>
+                                <span class="upload-link">click to browse</span>
+                            </p>
                             <p class="upload-hint">Supports: .txt, .docx files</p>
                         </div>
                         <input type="file" id="fileInput" multiple accept=".txt,.docx" style="display: none;">
