@@ -1,107 +1,107 @@
 # SELF_TESTS.md
 
-Тестовые случаи для DocStripper
+Test cases and usage examples for DocStripper
 
-## Тест 1: Удаление повторяющихся строк
+## Test 1: Duplicate Line Removal
 
-**Входной файл:**
+**Input file:**
 ```
-Это важная строка.
-Это важная строка.
-Это важная строка.
-Уникальная строка.
-Еще одна строка.
-Еще одна строка.
-```
-
-**Ожидаемый результат:**
-```
-Это важная строка.
-Уникальная строка.
-Еще одна строка.
+This is an important line.
+This is an important line.
+This is an important line.
+Unique line.
+Another line.
+Another line.
 ```
 
-**Ожидаемая статистика:**
+**Expected output:**
+```
+This is an important line.
+Unique line.
+Another line.
+```
+
+**Expected statistics:**
 - Duplicates collapsed: 2
 - Lines removed: 2
 
 ---
 
-## Тест 2: Удаление номеров страниц и заголовков
+## Test 2: Page Numbers and Headers Removal
 
-**Входной файл:**
+**Input file:**
 ```
 Page 1 of 10
-Документ начинается здесь.
+Document starts here.
 3
 4
 5
 Page 2 of 10
-Продолжение документа.
+Document continues.
 ```
 
-**Ожидаемый результат:**
+**Expected output:**
 ```
-Документ начинается здесь.
-Продолжение документа.
+Document starts here.
+Document continues.
 ```
 
-**Ожидаемая статистика:**
+**Expected statistics:**
 - Header/footer removed: 5
 - Lines removed: 5
 
 ---
 
-## Тест 3: Удаление пустых строк и пробелов
+## Test 3: Empty Lines and Whitespace Removal
 
-**Входной файл:**
+**Input file:**
 ```
-Первая строка.
+First line.
 
 
-Вторая строка.
+Second line.
    
-Третья строка.
+Third line.
 ```
 
-**Ожидаемый результат:**
+**Expected output:**
 ```
-Первая строка.
-Вторая строка.
-Третья строка.
+First line.
+Second line.
+Third line.
 ```
 
-**Ожидаемая статистика:**
+**Expected statistics:**
 - Empty lines removed: 4
 
 ---
 
-## Тест 4: Комплексный тест с различными типами мусора
+## Test 4: Comprehensive Test
 
-**Входной файл:**
+**Input file:**
 ```
 Confidential
 Page 1 of 5
 
-Основной текст документа.
-Основной текст документа.
+Main document text.
+Main document text.
 
 1
 2
 3
 
 DRAFT
-Важная информация.
+Important information.
 Page 2 of 5
 ```
 
-**Ожидаемый результат:**
+**Expected output:**
 ```
-Основной текст документа.
-Важная информация.
+Main document text.
+Important information.
 ```
 
-**Ожидаемая статистика:**
+**Expected statistics:**
 - Lines removed: 10
 - Duplicates collapsed: 1
 - Empty lines removed: 2
@@ -109,46 +109,43 @@ Page 2 of 5
 
 ---
 
-## Тест 5: Обработка DOCX файла
+## Test 5: DOCX File Processing
 
-**Предварительные условия:**
-- Создать тестовый DOCX файл с содержимым из Теста 1
+**Prerequisites:**
+- Create a test DOCX file with content from Test 1
 
-**Команда:**
+**Command:**
 ```bash
 python tool.py test.docx
 ```
 
-**Ожидаемое поведение:**
-- Файл должен быть обработан
-- Создан backup файл test.docx.bak
-- Текст должен быть очищен аналогично Тесту 1
+**Expected behavior:**
+- File should be processed
+- Backup file `test.docx.bak` created
+- Text should be cleaned similar to Test 1
 
 ---
 
-## Как запустить тесты
+## How to Run Tests
 
-1. Создайте тестовые файлы с содержимым из примеров выше
-2. Запустите DocStripper в режиме dry-run:
+1. Create test files with content from examples above
+2. Run DocStripper in dry-run mode:
 ```bash
 python tool.py --dry-run test1.txt
 ```
-3. Проверьте вывод статистики
-4. Запустите реальную обработку:
+3. Check the output statistics
+4. Run actual processing:
 ```bash
 python tool.py test1.txt
 ```
-5. Проверьте результат и сравните с ожидаемым
-6. При необходимости выполните откат:
+5. Verify results and compare with expected output
+6. If needed, perform undo:
 ```bash
 python tool.py --undo
 ```
 
-## Примечания
+## Notes
 
-- Все тесты должны выполняться на Python 3.9+
-- Для тестов с PDF требуется установленный pdftotext
-- Резервные копии (.bak) можно использовать для сравнения результатов
-
-
-
+- All tests should run on Python 3.9+
+- PDF tests require `pdftotext` to be installed
+- Backup files (`.bak`) can be used for comparison

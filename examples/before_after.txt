@@ -1,14 +1,14 @@
-ДО ОЧИСТКИ (BEFORE):
+BEFORE CLEANING:
 ═══════════════════════════════════════════════════════════════
 
 Page 1 of 5
 Confidential
 
-Введение
-Введение
+Introduction
+Introduction
 
-Это важный документ с полезной информацией.
-Это важный документ с полезной информацией.
+This is an important document with useful information.
+This is an important document with useful information.
 
 1
 2
@@ -17,12 +17,12 @@ Confidential
 Page 2 of 5
 DRAFT
 
-Основной контент начинается здесь.
-Основной контент начинается здесь.
+Main content starts here.
+Main content starts here.
 
 
-Пустая строка выше.
-Пустая строка выше.
+Empty line above.
+Empty line above.
 
 4
 5
@@ -30,8 +30,8 @@ DRAFT
 
 Page 3 of 5
 
-Еще больше полезной информации.
-Еще больше полезной информации.
+More useful information.
+More useful information.
 
 7
 8
@@ -39,8 +39,8 @@ Page 3 of 5
 
 Page 4 of 5
 
-Продолжение документа.
-Продолжение документа.
+Document continues.
+Document continues.
 
 
 10
@@ -49,27 +49,26 @@ Page 4 of 5
 
 Page 5 of 5
 
-Заключение.
-Заключение.
+Conclusion.
+Conclusion.
 
 ═══════════════════════════════════════════════════════════════
 
-ПОСЛЕ ОЧИСТКИ (AFTER):
+AFTER CLEANING:
 ═══════════════════════════════════════════════════════════════
 
-Введение
-Это важный документ с полезной информацией.
-Основной контент начинается здесь.
-Пустая строка выше.
-Еще больше полезной информации.
-Продолжение документа.
-Заключение.
+Introduction
+This is an important document with useful information.
+Main content starts here.
+Empty line above.
+More useful information.
+Document continues.
+Conclusion.
 
 ═══════════════════════════════════════════════════════════════
 
-СТАТИСТИКА:
-- Удалено строк: 25
-- Свернуто дубликатов: 7
-- Удалено пустых строк: 3
-- Удалено заголовков/подвалов: 15
-
+STATISTICS:
+- Lines removed: 25
+- Duplicates collapsed: 7
+- Empty lines removed: 3
+- Headers/footers removed: 15

@@ -1,23 +1,138 @@
-# DocStripper
+# 🧹 DocStripper
 
-Batch document cleaner — удаляет мусор из текстовых документов.
+> **Batch document cleaner** — Remove noise from text documents automatically
 
-## Описание
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
+[![Code Style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](https://www.python.org/dev/peps/pep-0008/)
 
-DocStripper — это CLI-утилита для массовой очистки текстовых файлов от визуального мусора:
-- Повторяющиеся строки
-- Номера страниц
-- Заголовки и подвалы (например, "Page 3 of 12", "Confidential")
-- Пустые строки
+**DocStripper** is a lightweight CLI utility that automatically cleans text documents by removing:
+- 📄 Page numbers and headers/footers
+- 🔁 Duplicate consecutive lines
+- 📝 Empty lines and whitespace
+- 🏷️ Common markers (Confidential, DRAFT, etc.)
 
-Утилита работает полностью офлайн, используя только стандартную библиотеку Python.
+All processing happens **offline** using only Python standard library — no external dependencies required!
 
-## Требования
+---
 
-- Python 3.9 или выше
-- Для обработки PDF: рекомендуется установить `pdftotext` (входит в пакет `poppler-utils`)
+## ✨ Features
 
-### Установка pdftotext
+- 🚀 **Fast & Lightweight** — Uses only Python stdlib, no external packages
+- 🔒 **Privacy-First** — All processing happens offline, no data sent anywhere
+- 📊 **Dry-Run Mode** — Preview changes before applying them
+- 🔄 **Undo Support** — Easily restore files from backups
+- 📈 **Detailed Statistics** — See exactly what was removed
+- 🌍 **Cross-Platform** — Works on Windows, macOS, and Linux
+- 📚 **Multiple Formats** — Supports `.txt`, `.docx`, and `.pdf` files
+
+---
+
+## 🎯 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/kiku-jw/DocStripper2.git
+cd DocStripper2
+
+# Make executable (optional)
+chmod +x tool.py
+```
+
+### Basic Usage
+
+```bash
+# Clean a single file
+python tool.py document.txt
+
+# Clean multiple files
+python tool.py file1.txt file2.txt file3.docx
+
+# Preview changes without modifying files
+python tool.py --dry-run document.txt
+
+# Clean all text files in current directory
+python tool.py *.txt
+```
+
+---
+
+## 📖 Examples
+
+### Example 1: Clean a messy document
+
+**Before:**
+```
+Page 1 of 10
+Confidential
+
+Important content here.
+Important content here.
+Important content here.
+
+1
+2
+3
+
+Page 2 of 10
+...
+```
+
+**After:**
+```
+Important content here.
+...
+```
+
+**Command:**
+```bash
+python tool.py messy_document.txt
+```
+
+### Example 2: Preview changes
+
+```bash
+python tool.py --dry-run important_report.pdf
+```
+
+**Output:**
+```
+Processing: important_report.pdf
+  - Lines removed: 45
+  - Duplicates collapsed: 12
+  - Empty lines removed: 18
+  - Headers/footers removed: 15
+  [DRY RUN] Would clean important_report.pdf
+```
+
+### Example 3: Batch processing
+
+```bash
+python tool.py *.txt *.docx
+```
+
+Processes all matching files and creates backups automatically.
+
+### Example 4: Undo changes
+
+```bash
+# Restore files from last operation
+python tool.py --undo
+```
+
+---
+
+## 🛠️ Supported Formats
+
+| Format | Support | Requirements |
+|--------|---------|--------------|
+| `.txt` | ✅ Full | UTF-8, Latin-1 |
+| `.docx` | ✅ Basic | Text extraction only |
+| `.pdf` | ✅ Basic | Requires `pdftotext` (poppler-utils) |
+
+### Installing PDF Support
 
 **macOS:**
 ```bash
@@ -30,140 +145,166 @@ sudo apt-get install poppler-utils
 ```
 
 **Windows:**
-Скачайте Poppler для Windows с [официального сайта](https://github.com/oschwartz10612/poppler-windows/releases/)
+Download Poppler from [official releases](https://github.com/oschwartz10612/poppler-windows/releases/)
 
-## Установка
+---
 
-1. Клонируйте репозиторий:
-```bash
-git clone https://github.com/yourusername/DocStripper.git
-cd DocStripper
+## 🎨 What Gets Removed?
+
+### 1. Page Numbers
+Lines containing only numbers are treated as page markers:
+```
+1
+2
+3
+```
+→ Removed
+
+### 2. Headers & Footers
+Common patterns are automatically detected:
+- `Page X of Y`
+- `Page X`
+- `Confidential`
+- `DRAFT`
+- `CONFIDENTIAL`
+
+### 3. Duplicate Lines
+Consecutive identical lines are collapsed:
+```
+Important line
+Important line
+Important line
+```
+→ Becomes:
+```
+Important line
 ```
 
-2. Сделайте файл исполняемым (опционально):
-```bash
-chmod +x tool.py
+### 4. Empty Lines
+Whitespace-only lines are removed:
+```
+Line 1
+
+
+Line 2
+```
+→ Becomes:
+```
+Line 1
+Line 2
 ```
 
-## Использование
+---
 
-### Базовое использование
+## 📊 Statistics
 
-Очистить один файл:
-```bash
-python tool.py document.txt
+After processing, DocStripper shows detailed statistics:
+
+```
+==================================================
+STATISTICS
+==================================================
+Files processed: 3
+Lines removed: 127
+Duplicates collapsed: 23
+Empty lines removed: 45
+Headers/footers removed: 59
+==================================================
 ```
 
-Очистить несколько файлов:
-```bash
-python tool.py file1.txt file2.txt file3.docx
-```
+---
 
-Очистить все текстовые файлы в текущей директории:
-```bash
-python tool.py *.txt
-```
+## 🔄 Logging & Undo
 
-### Режим dry-run (пробный запуск)
+All operations are logged to `.strip-log` (JSON format) with:
+- List of processed files
+- Backup file paths
+- Detailed statistics
+- Timestamps
 
-Посмотреть, что будет изменено без фактического изменения файлов:
-```bash
-python tool.py --dry-run document.txt
-```
-
-### Откат изменений
-
-Восстановить файлы из последней операции:
+**Restore from last operation:**
 ```bash
 python tool.py --undo
 ```
 
-### Примеры использования
+**Backup files** are created with `.bak` extension automatically.
 
-**Пример 1: Очистка одного документа**
+---
+
+## ⚙️ Command Line Options
+
 ```bash
-python tool.py messy_document.txt
-# Обработает файл и создаст резервную копию messy_document.txt.bak
+python tool.py [OPTIONS] [FILES...]
+
+Options:
+  -h, --help     Show help message and exit
+  --dry-run      Preview changes without modifying files
+  --undo         Restore files from last operation
+
+Examples:
+  tool.py document.txt
+  tool.py *.txt *.docx
+  tool.py --dry-run report.pdf
+  tool.py --undo
 ```
 
-**Пример 2: Массовая обработка документов**
-```bash
-python tool.py *.txt *.docx
-# Обработает все .txt и .docx файлы в текущей директории
-```
+---
 
-**Пример 3: Проверка перед очисткой**
-```bash
-python tool.py --dry-run important_report.pdf
-# Покажет статистику без изменения файла
-```
+## 🚦 Exit Codes
 
-**Пример 4: Обработка PDF файла**
-```bash
-python tool.py report.pdf
-# Извлечет текст и очистит его (требуется pdftotext)
-```
+- `0` — Success
+- `1` — Error (file not found, read error, etc.)
 
-**Пример 5: Откат последней операции**
-```bash
-python tool.py --undo
-# Восстановит все файлы из последней операции
-```
+---
 
-**Пример 6: Обработка с выводом статистики**
-```bash
-python tool.py document1.txt document2.txt
-# После обработки покажет:
-# - Количество обработанных файлов
-# - Удаленных строк
-# - Свернутых дубликатов
-# - Удаленных пустых строк
-# - Удаленных заголовков/подвалов
-```
+## 🔧 Requirements
 
-## Поддерживаемые форматы
+- **Python 3.9+** (tested with Python 3.9–3.13)
+- **PDF support** (optional): `pdftotext` from poppler-utils
 
-- `.txt` — текстовые файлы (UTF-8, Latin-1)
-- `.docx` — документы Microsoft Word (извлечение текста через XML)
-- `.pdf` — PDF документы (требуется `pdftotext`)
+---
 
-## Что удаляется
+## 📝 Limitations
 
-1. **Повторяющиеся строки** — последовательные одинаковые строки
-2. **Номера страниц** — строки, содержащие только числа
-3. **Заголовки и подвалы** — паттерны типа:
-   - "Page X of Y"
-   - "Page X"
-   - "Confidential"
-   - "DRAFT"
-4. **Пустые строки** — строки, содержащие только пробелы
+- **DOCX files**: Processed as plain text (formatting may be lost)
+- **PDF files**: Requires `pdftotext` to be installed
+- **Complex formatting**: May be lost during text extraction
 
-## Логирование и откат
+---
 
-Все операции записываются в файл `.strip-log` в формате JSON. Каждая операция включает:
-- Список обработанных файлов
-- Пути к резервным копиям (.bak)
-- Статистику изменений
-- Временную метку
+## 🤝 Contributing
 
-Используйте `--undo` для восстановления последней операции.
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
 
-## Выходные коды
+---
 
-- `0` — успешное выполнение
-- `1` — ошибка (файл не найден, ошибка чтения и т.д.)
+## 📄 License
 
-## Ограничения
+This project is licensed under the MIT License — see the [LICENSE.txt](LICENSE.txt) file for details.
 
-- DOCX файлы обрабатываются как простой текст (форматирование теряется)
-- PDF файлы требуют наличия `pdftotext` в системе
-- Сложное форматирование может быть потеряно при извлечении текста
+---
 
-## Лицензия
+## 🙏 Acknowledgments
 
-MIT License — см. файл LICENSE.txt
+DocStripper is designed to help you clean up messy documents quickly and efficiently.
 
-## Автор
+---
 
-DocStripper — инструмент для автоматической очистки документов.
+## 📚 Additional Resources
 
+- [Changelog](CHANGELOG.md) — Version history
+- [Self Tests](SELF_TESTS.md) — Test cases and examples
+- [Release Ledger](RELEASE_LEDGER.json) — Release tracking
+
+---
+
+<div align="center">
+
+**Made with ❤️ for clean documents**
+
+[⭐ Star this repo](https://github.com/kiku-jw/DocStripper2) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper2/issues) | [💡 Request Feature](https://github.com/kiku-jw/DocStripper2/issues)
+
+</div>
