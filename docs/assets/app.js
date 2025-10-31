@@ -183,31 +183,16 @@ class App {
     }
 
     setupEventListeners() {
-        // Click to upload - use label approach for better browser compatibility
-        // The label wraps the file input, so clicking anywhere on upload area triggers it
-        const fileInputLabel = this.uploadArea.querySelector('.file-input-label');
-        if (fileInputLabel) {
-            // Make label cover entire upload area
-            fileInputLabel.style.position = 'absolute';
-            fileInputLabel.style.top = '0';
-            fileInputLabel.style.left = '0';
-            fileInputLabel.style.width = '100%';
-            fileInputLabel.style.height = '100%';
-            fileInputLabel.style.cursor = 'pointer';
-            fileInputLabel.style.zIndex = '1';
-            // Ensure label is clickable
-            fileInputLabel.style.pointerEvents = 'auto';
-        }
-        
-        // Direct click handler on upload area as primary method
+        // File input is positioned absolutely over upload area, so clicking anywhere opens it
+        // Also handle direct clicks on upload area as fallback
         this.uploadArea.addEventListener('click', (e) => {
             // Don't trigger if clicking on remove button or other interactive elements
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            // Trigger file input click directly
-            if (this.fileInput && e.target !== this.fileInput) {
-                // Small delay to ensure event propagation
+            // If click is not on file input itself, trigger it
+            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('input[type="file"]')) {
+                // Use setTimeout for better compatibility
                 setTimeout(() => {
                     try {
                         this.fileInput.click();
@@ -223,7 +208,8 @@ class App {
             if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
                 return;
             }
-            if (this.fileInput && e.target !== this.fileInput) {
+            if (this.fileInput && e.target !== this.fileInput && !e.target.closest('input[type="file"]')) {
+                // Prevent default to avoid conflicts
                 e.preventDefault();
                 setTimeout(() => {
                     try {
@@ -575,7 +561,7 @@ async function init() {
         // Load JSZip and initialize app
         await loadJSZip();
         window.JSZip = JSZip;
-        new App();
+        window.app = new App(); // Save app instance for testing
     } catch (error) {
         console.error('Failed to initialize:', error);
         const errorDiv = document.createElement('div');
