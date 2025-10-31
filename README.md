@@ -8,6 +8,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
+[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Featured-orange)](https://www.producthunt.com/products/docstripper)
 
 **DocStripper** automatically cleans text documents by removing page numbers, headers/footers, duplicate lines, and empty lines. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM).
 
@@ -157,6 +158,6 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 **Made with ❤️ for clean documents**
 
-[⭐ Star this repo](https://github.com/kiku-jw/DocStripper2) | [🌐 Try online](https://kiku-jw.github.io/DocStripper2/) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper2/issues)
+[⭐ Star this repo](https://github.com/kiku-jw/DocStripper2) | [🌐 Try online](https://kiku-jw.github.io/DocStripper2/) | [🚀 Product Hunt](https://www.producthunt.com/products/docstripper) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper2/issues)
 
 </div>
