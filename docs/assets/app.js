@@ -489,7 +489,9 @@ JSON FORMAT (strict):
   ]
 }
 
-EXAMPLE:
+EXAMPLES:
+
+Example 1:
 Input:
 0: Page 1 of 10
 1: Confidential
@@ -508,6 +510,29 @@ Expected JSON:
   {"i":4,"action":"drop"},
   {"i":5,"action":"keep"},
   {"i":6,"action":"keep"}
+]}
+
+Example 2:
+Input:
+0: Introduction
+1: 
+2: 
+3: Main paragraph here.
+4: ---
+5: 1
+6: 2
+7: Conclusion
+
+Expected JSON:
+{"lines":[
+  {"i":0,"action":"keep"},
+  {"i":1,"action":"keep"},
+  {"i":2,"action":"drop"},
+  {"i":3,"action":"keep"},
+  {"i":4,"action":"drop"},
+  {"i":5,"action":"drop"},
+  {"i":6,"action":"drop"},
+  {"i":7,"action":"keep"}
 ]}`;
 
         const userPrompt = `Return JSON with action for each line. Process ALL lines in order.
@@ -588,7 +613,10 @@ Respond with JSON only:`;
                 throw new Error('Cancelled by user');
             }
 
-            const chunks = this.chunkText(text, 3000);
+            // Adaptive chunk size based on text length
+            const textLength = text.length;
+            const maxChunkSize = textLength > 50000 ? 4000 : textLength > 20000 ? 3500 : 3000;
+            const chunks = this.chunkText(text, maxChunkSize);
             let result = [];
             const stats = {
                 linesRemoved: 0,
@@ -599,40 +627,59 @@ Respond with JSON only:`;
             };
 
             const originalLineCount = text.split('\n').length;
-
-            for (let i = 0; i < chunks.length; i++) {
+            const totalChunks = chunks.length;
+            
+            // Process chunks in batches for better performance
+            const batchSize = 3;
+            for (let batchStart = 0; batchStart < totalChunks; batchStart += batchSize) {
                 if (this.isCancelled) {
                     throw new Error('Cancelled by user');
                 }
 
-                const chunk = chunks[i];
-                const progressPercent = Math.floor((i / chunks.length) * 100);
-                this.updateProgress(progressPercent, `Processing chunk ${i + 1}/${chunks.length}...`);
+                const batchEnd = Math.min(batchStart + batchSize, totalChunks);
+                const batch = chunks.slice(batchStart, batchEnd);
+                
+                // Process batch in parallel
+                const batchPromises = batch.map(async (chunk, batchIdx) => {
+                    const chunkIdx = batchStart + batchIdx;
+                    const progressPercent = Math.floor((chunkIdx / totalChunks) * 100);
+                    this.updateProgress(progressPercent, `Processing chunk ${chunkIdx + 1}/${totalChunks}...`);
 
-                const { systemPrompt, userPrompt } = this.buildPromptForChunk(chunk);
+                    try {
+                        const { systemPrompt, userPrompt } = this.buildPromptForChunk(chunk);
 
-                const reply = await engine.chat.completions.create({
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.2,
-                    max_tokens: 2000
+                        const reply = await engine.chat.completions.create({
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: userPrompt }
+                            ],
+                            temperature: 0.2,
+                            max_tokens: 2000
+                        });
+
+                        const content = reply.choices?.[0]?.message?.content ?? '{}';
+                        const plan = this.safeParseJSON(content);
+
+                        if (!plan) {
+                            console.warn(`Failed to parse LLM response for chunk ${chunkIdx + 1}, using original chunk`);
+                            return chunk.lines.join('\n');
+                        } else {
+                            return this.applyPlan(chunk, plan);
+                        }
+                    } catch (error) {
+                        console.error(`Error processing chunk ${chunkIdx + 1}:`, error);
+                        return chunk.lines.join('\n'); // Fallback to original
+                    }
                 });
 
-                const content = reply.choices?.[0]?.message?.content ?? '{}';
-                const plan = this.safeParseJSON(content);
+                // Wait for batch to complete
+                const batchResults = await Promise.all(batchPromises);
+                result.push(...batchResults);
 
-                if (!plan) {
-                    console.warn('Failed to parse LLM response, using original chunk');
-                    result.push(chunk.lines.join('\n'));
-                } else {
-                    const cleanedChunk = this.applyPlan(chunk, plan);
-                    result.push(cleanedChunk);
+                // Small delay between batches to prevent UI freezing
+                if (batchEnd < totalChunks) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
-
-                // Small delay to prevent UI freezing
-                await new Promise(resolve => setTimeout(resolve, 50));
             }
 
             const cleanedText = result.join('\n');
@@ -1188,15 +1235,19 @@ class App {
             }
 
             const displayText = result.cleanedText;
+            const modeBadge = result.mode === 'smart' ? '<span class="mode-badge smart">🤖 Smart Clean</span>' : 
+                             result.mode === 'fast-fallback' ? '<span class="mode-badge fallback">⚡ Fast (Fallback)</span>' : 
+                             '<span class="mode-badge fast">⚡ Fast Clean</span>';
 
             html += `
                 <div class="result-card">
                     <div class="result-header">
-                        <h4>${this.escapeHtml(result.fileName)}</h4>
+                        <h4>${this.escapeHtml(result.fileName)} ${modeBadge}</h4>
                         <div class="result-stats">
                             <span>${result.stats.linesRemoved} lines removed</span>
-                            <span>${result.stats.duplicatesCollapsed} duplicates</span>
-                            <span>${result.stats.headerFooterRemoved} headers/footers</span>
+                            ${result.stats.duplicatesCollapsed > 0 ? `<span>${result.stats.duplicatesCollapsed} duplicates</span>` : ''}
+                            ${result.stats.headerFooterRemoved > 0 ? `<span>${result.stats.headerFooterRemoved} headers/footers</span>` : ''}
+                            ${result.stats.punctuationLinesRemoved > 0 ? `<span>${result.stats.punctuationLinesRemoved} punctuation</span>` : ''}
                         </div>
                     </div>
                     <div class="result-content">

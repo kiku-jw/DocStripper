@@ -13,10 +13,28 @@
 
 **🌐 [Try it online →](https://kiku-jw.github.io/DocStripper2/)** — No installation needed!
 
+**Web App Features:**
+- ⚡ **Fast Clean** — Instant rule-based cleaning
+- 🤖 **Smart Clean (Beta)** — AI-powered cleaning with on-device LLM
+  - Requires WebGPU support (most modern browsers)
+  - One-time download of ~100-200 MB (model weights)
+  - Works offline after first load
+  - Fully customizable via cleaning options
+
 ---
 
 ## ✨ Features
 
+### Web Application
+- 🚀 **Fast Clean** — Rule-based cleaning (instant)
+- 🤖 **Smart Clean (Beta)** — AI-powered cleaning using on-device LLM (WebLLM)
+- ⚙️ **Customizable Options** — Configure what gets removed
+- 🔒 **100% Private** — All processing happens in your browser
+- 📊 **Real-time Statistics** — See exactly what was removed
+- 📥 **Download & Copy** — Download cleaned files or copy to clipboard
+- 🎨 **Dark Theme** — Toggle between light and dark themes
+
+### CLI Tool
 - 🚀 **Fast & Lightweight** — Uses only Python stdlib, no external packages
 - 🔒 **Privacy-First** — All processing happens offline
 - 📊 **Dry-Run Mode** — Preview changes before applying
