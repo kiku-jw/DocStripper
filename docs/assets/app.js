@@ -192,9 +192,22 @@ class App {
             }
             // Trigger file input click
             if (this.fileInput) {
+                e.preventDefault();
+                e.stopPropagation();
                 this.fileInput.click();
             }
         });
+        
+        // Also make upload-content clickable (bypass pointer-events: none)
+        const uploadContent = this.uploadArea.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.fileInput) {
+                    this.fileInput.click();
+                }
+            });
+        }
 
         // Drag and drop
         this.uploadArea.addEventListener('dragover', (e) => {
@@ -229,13 +242,18 @@ class App {
         );
 
         if (validFiles.length === 0) {
-            alert('Please upload .txt or .docx files only.');
+            this.showToast('Please upload .txt or .docx files only.', 'error');
             return;
         }
 
         this.files.push(...validFiles);
         this.updateFileList();
         this.processFiles();
+        
+        // Reset file input to allow selecting the same file again
+        if (this.fileInput) {
+            this.fileInput.value = '';
+        }
     }
 
     updateFileList() {
@@ -304,6 +322,11 @@ class App {
 
         this.results = results;
         this.displayResults(results, totalStats);
+        
+        // Scroll to results section after processing
+        setTimeout(() => {
+            this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
 
     displayResults(results, totalStats) {
@@ -384,15 +407,19 @@ class App {
         // Setup download and copy buttons
         document.querySelectorAll('.download-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                this.downloadFile(results[index]);
+                const index = parseInt(e.target.dataset.index || e.target.closest('.download-btn').dataset.index);
+                if (results[index]) {
+                    this.downloadFile(results[index]);
+                }
             });
         });
 
         document.querySelectorAll('.copy-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                this.copyToClipboard(results[index].cleanedText);
+                const index = parseInt(e.target.dataset.index || e.target.closest('.copy-btn').dataset.index);
+                if (results[index]) {
+                    this.copyToClipboard(results[index].cleanedText);
+                }
             });
         });
     }
