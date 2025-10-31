@@ -2,9 +2,9 @@
 
 ## GitHub Topics (Tags)
 
-Рекомендуемые topics для репозитория (добавить в настройках репозитория на GitHub):
+Recommended topics for the repository (add in repository settings on GitHub):
 
-### Основные:
+### Main:
 - document-cleaner
 - text-processing
 - document-processing
@@ -12,7 +12,7 @@
 - pdf-cleaner
 - docx-cleaner
 
-### Технологии:
+### Technologies:
 - python
 - javascript
 - webllm
@@ -22,7 +22,7 @@
 - client-side
 - privacy-first
 
-### Функциональность:
+### Functionality:
 - remove-page-numbers
 - batch-processing
 - duplicate-removal
@@ -30,7 +30,7 @@
 - text-extraction
 - offline-first
 
-### Категории:
+### Categories:
 - utility
 - tool
 - cli-tool
@@ -40,16 +40,15 @@
 
 ## GitHub Description
 
-**Короткое описание для GitHub (до 160 символов):**
+**Short description for GitHub (up to 160 characters):**
 ```
 AI-powered batch document cleaner - Remove page numbers, headers, footers, duplicates from text files. Fast Clean (instant) or Smart Clean (AI with on-device LLM). 100% private, works offline.
 ```
 
-## Дополнительные улучшения:
+## Additional Improvements:
 
-1. **Добавить теги в README** - уже есть в виде badges
-2. **Создать .github/FUNDING.yml** - если планируется монетизация
-3. **Добавить CODEOWNERS** - для автоматизации ревью
-4. **Улучшить CONTRIBUTING.md** - для привлечения контрибьюторов
-5. **Добавить ISSUE_TEMPLATE** - для структурированных багов
-
+1. **Add tags to README** - already present as badges
+2. **Create .github/FUNDING.yml** - if monetization is planned
+3. **Add CODEOWNERS** - for review automation
+4. **Improve CONTRIBUTING.md** - to attract contributors
+5. **Add ISSUE_TEMPLATE** - for structured bug reports
