@@ -1,6 +1,10 @@
-# 🧹 DocStripper
-
-> **Batch document cleaner** — Remove noise from text documents automatically
+<div align="center">
+  <img src="docs/assets/icon.svg" alt="DocStripper Logo" width="120">
+  
+  # 🧹 DocStripper
+  
+  > **Batch document cleaner** — Remove noise from text documents automatically
+</div>
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
