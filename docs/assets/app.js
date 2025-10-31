@@ -240,9 +240,9 @@ class App {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
-                <span class="file-name">${file.name}</span>
+                <span class="file-name">${this.escapeHtml(file.name)}</span>
                 <span class="file-size">${this.formatFileSize(file.size)}</span>
-                <button class="remove-file" data-index="${index}">×</button>
+                <button class="remove-file" data-index="${index}" aria-label="Remove file">×</button>
             `;
             
             fileItem.querySelector('.remove-file').addEventListener('click', () => {
@@ -331,20 +331,20 @@ class App {
             if (!result.success) {
                 html += `
                     <div class="result-card error">
-                        <h4>${result.fileName}</h4>
-                        <p class="error-message">Error: ${result.error}</p>
+                        <h4>${this.escapeHtml(result.fileName)}</h4>
+                        <p class="error-message">Error: ${this.escapeHtml(result.error)}</p>
                     </div>
                 `;
                 return;
             }
 
             const isDryRun = this.dryRunCheck.checked;
-            const displayText = isDryRun ? result.cleanedText : result.cleanedText;
+            const displayText = result.cleanedText;
 
             html += `
                 <div class="result-card">
                     <div class="result-header">
-                        <h4>${result.fileName}</h4>
+                        <h4>${this.escapeHtml(result.fileName)}</h4>
                         <div class="result-stats">
                             <span>${result.stats.linesRemoved} lines removed</span>
                             <span>${result.stats.duplicatesCollapsed} duplicates</span>
@@ -400,10 +400,24 @@ class App {
 
     copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
-            alert('Text copied to clipboard!');
+            // Show toast notification instead of alert
+            this.showToast('Text copied to clipboard!');
         }).catch(() => {
-            alert('Failed to copy to clipboard');
+            this.showToast('Failed to copy to clipboard', 'error');
         });
+    }
+
+    showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     clearAll() {
@@ -429,21 +443,14 @@ class App {
     }
 }
 
-// Load JSZip library dynamically
-function loadJSZip() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
 // Theme Management
 class ThemeManager {
     constructor() {
         this.themeToggle = document.getElementById('themeToggle');
+        if (!this.themeToggle) {
+            console.error('Theme toggle button not found');
+            return;
+        }
         this.currentTheme = localStorage.getItem('theme') || 'light';
         this.init();
     }
@@ -463,8 +470,25 @@ class ThemeManager {
 
     updateIcon() {
         const icon = this.themeToggle.querySelector('.theme-icon');
-        icon.textContent = this.currentTheme === 'light' ? '🌙' : '☀️';
+        if (icon) {
+            icon.textContent = this.currentTheme === 'light' ? '🌙' : '☀️';
+        }
     }
+}
+
+// Load JSZip library dynamically
+function loadJSZip() {
+    return new Promise((resolve, reject) => {
+        if (window.JSZip) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
 }
 
 // Initialize app when DOM is ready
@@ -478,8 +502,11 @@ async function init() {
         window.JSZip = JSZip;
         new App();
     } catch (error) {
-        console.error('Failed to load JSZip:', error);
-        alert('Failed to initialize app. Please refresh the page.');
+        console.error('Failed to initialize:', error);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-banner';
+        errorDiv.innerHTML = 'Failed to initialize app. Please refresh the page.';
+        document.body.insertBefore(errorDiv, document.body.firstChild);
     }
 }
 
@@ -488,4 +515,3 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
-
