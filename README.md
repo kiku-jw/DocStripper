@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/icon.svg" alt="DocStripper Logo" width="120">
+  <img src="docs/assets/icon.svg?v=2" alt="DocStripper Logo" width="120">
   
   # 🧹 DocStripper
   
