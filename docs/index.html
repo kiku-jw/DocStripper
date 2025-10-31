@@ -159,6 +159,54 @@ Empty line above.</code></pre>
                 <p>You can also use DocStripper as a CLI tool. Check out our <a href="https://github.com/kiku-jw/DocStripper2#installation" target="_blank">GitHub repository</a> for installation instructions.</p>
             </div>
         </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="how-it-works-content">
+                    <p class="how-it-works-intro">
+                        DocStripper uses a simple but effective line-by-line cleaning algorithm to remove noise from your documents:
+                    </p>
+                    
+                    <div class="how-it-works-steps">
+                        <div class="how-it-works-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Read & Extract</h3>
+                                <p>The tool reads your file (TXT or DOCX) and extracts all text content. For DOCX files, it extracts text from the document structure.</p>
+                            </div>
+                        </div>
+
+                        <div class="how-it-works-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Line-by-Line Analysis</h3>
+                                <p>Each line is analyzed and filtered based on several criteria:</p>
+                                <ul class="step-list">
+                                    <li><strong>Empty lines</strong> — Removed completely</li>
+                                    <li><strong>Page numbers</strong> — Lines containing only digits (e.g., "1", "2", "3")</li>
+                                    <li><strong>Headers/Footers</strong> — Common patterns like "Page 1 of 5", "Confidential", "DRAFT"</li>
+                                    <li><strong>Duplicate lines</strong> — Consecutive identical lines are collapsed into one</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="how-it-works-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Clean Output</h3>
+                                <p>The cleaned text is assembled from the remaining lines, preserving the original formatting and structure while removing all noise.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="how-it-works-note">
+                        <p><strong>🔒 Privacy First:</strong> All processing happens entirely in your browser. Your files never leave your computer — no uploads, no server-side processing, complete privacy.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">
