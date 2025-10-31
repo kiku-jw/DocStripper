@@ -8,6 +8,8 @@ class DocStripper {
             removePageNumbers: options.removePageNumbers !== false,
             removeHeadersFooters: options.removeHeadersFooters !== false,
             removeDuplicates: options.removeDuplicates !== false,
+            removePunctuationLines: options.removePunctuationLines !== false,
+            preserveParagraphSpacing: options.preserveParagraphSpacing !== false,
         };
         
         // Enhanced header/footer patterns
@@ -30,14 +32,36 @@ class DocStripper {
             /^CLASSIFIED$/i,
             /^Classified$/i,
             /^FOR INTERNAL USE ONLY$/i,
+            /^FOR\s+INTERNAL\s+USE\s+ONLY$/i,
+            /^INTERNAL USE ONLY$/i,
             /^DO NOT DISTRIBUTE$/i,
+            /^PROPRIETARY$/i,
+            /^Proprietary$/i,
         ];
     }
 
     isPageNumber(line) {
         const stripped = line.trim();
         if (!stripped) return false;
-        return /^\s*\d+\s*$/.test(stripped);
+        
+        // Regular numbers: 1, 2, 3, etc.
+        if (/^\d+$/.test(stripped)) return true;
+        
+        // Roman numerals: I, II, III, IV, etc.
+        if (/^[IVXLCDM]+$/i.test(stripped) && stripped.length <= 10) return true;
+        
+        // Single letters: A, B, C, etc. (common in appendices)
+        if (/^[A-Z]$/i.test(stripped)) return true;
+        
+        return false;
+    }
+
+    isPunctuationOnly(line) {
+        const stripped = line.trim();
+        if (!stripped) return false;
+        
+        // Lines with only punctuation characters: ---, ***, ===, etc.
+        return /^[^\w\s]+$/.test(stripped) && stripped.length <= 50;
     }
 
     isHeaderFooter(line) {
@@ -51,11 +75,13 @@ class DocStripper {
         const lines = text.split('\n');
         const cleanedLines = [];
         let prevLine = null;
+        let prevNonEmptyLine = null;
         const stats = {
             linesRemoved: 0,
             duplicatesCollapsed: 0,
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
+            punctuationLinesRemoved: 0,
         };
 
         for (let i = 0; i < lines.length; i++) {
@@ -65,12 +91,34 @@ class DocStripper {
             // Skip empty or whitespace-only lines (if enabled)
             if (!stripped) {
                 if (this.options.removeEmptyLines) {
+                    // If preserving paragraph spacing, keep one empty line after non-empty lines
+                    if (this.options.preserveParagraphSpacing && prevNonEmptyLine !== null) {
+                        // Check if next line is non-empty
+                        let nextNonEmptyIdx = i + 1;
+                        while (nextNonEmptyIdx < lines.length && !lines[nextNonEmptyIdx].trim()) {
+                            nextNonEmptyIdx++;
+                        }
+                        
+                        // If there's a non-empty line after this empty line, keep one empty line
+                        if (nextNonEmptyIdx < lines.length && lines[nextNonEmptyIdx].trim()) {
+                            cleanedLines.push(line);
+                            prevNonEmptyLine = null; // Reset to prevent multiple empty lines
+                            continue;
+                        }
+                    }
+                    
                     stats.emptyLinesRemoved++;
                     continue;
                 } else {
                     cleanedLines.push(line);
                     continue;
                 }
+            }
+
+            // Skip punctuation-only lines (if enabled)
+            if (this.options.removePunctuationLines && this.isPunctuationOnly(stripped)) {
+                stats.punctuationLinesRemoved++;
+                continue;
             }
 
             // Skip page numbers (if enabled)
@@ -93,6 +141,7 @@ class DocStripper {
 
             cleanedLines.push(line);
             prevLine = line;
+            prevNonEmptyLine = line;
         }
 
         stats.linesRemoved = lines.length - cleanedLines.length;
@@ -180,6 +229,7 @@ class DocStripper {
             duplicatesCollapsed: 0,
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
+            punctuationLinesRemoved: 0,
         };
     }
 }
@@ -435,6 +485,8 @@ class App {
             removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
             removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true,
             removeDuplicates: this.removeDuplicates ? this.removeDuplicates.checked : true,
+            removePunctuationLines: this.removePunctuationLines ? this.removePunctuationLines.checked : true,
+            preserveParagraphSpacing: this.preserveParagraphSpacing ? this.preserveParagraphSpacing.checked : true,
         };
 
         // Create new stripper instance with current settings
@@ -455,6 +507,7 @@ class App {
             duplicatesCollapsed: 0,
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
+            punctuationLinesRemoved: 0,
         };
 
         for (const file of this.files) {
@@ -467,6 +520,7 @@ class App {
                 totalStats.duplicatesCollapsed += result.stats.duplicatesCollapsed;
                 totalStats.emptyLinesRemoved += result.stats.emptyLinesRemoved;
                 totalStats.headerFooterRemoved += result.stats.headerFooterRemoved;
+                totalStats.punctuationLinesRemoved += result.stats.punctuationLinesRemoved || 0;
             }
         }
 
@@ -507,6 +561,12 @@ class App {
                         <span class="stat-value">${totalStats.headerFooterRemoved}</span>
                         <span class="stat-label">Headers/Footers Removed</span>
                     </div>
+                    ${totalStats.punctuationLinesRemoved > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-value">${totalStats.punctuationLinesRemoved}</span>
+                        <span class="stat-label">Punctuation Lines Removed</span>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;

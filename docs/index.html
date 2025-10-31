@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocStripper - Batch Document Cleaner</title>
     <meta name="description" content="DocStripper - Remove noise from text documents automatically. Clean page numbers, headers, footers, duplicates, and empty lines.">
-    <link rel="stylesheet" href="assets/style.css?v=10">
+    <link rel="stylesheet" href="assets/style.css?v=11">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
 </head>
 <body>
@@ -76,6 +76,20 @@
                                 <span class="setting-label">
                                     <span class="setting-title">Remove Duplicates</span>
                                     <span class="setting-desc">Collapse consecutive identical lines</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="removePunctuationLines" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Punctuation Lines</span>
+                                    <span class="setting-desc">Remove lines with only symbols (---, ***, ===)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="preserveParagraphSpacing" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Preserve Paragraph Spacing</span>
+                                    <span class="setting-desc">Keep one empty line between paragraphs</span>
                                 </span>
                             </label>
                         </div>
@@ -259,6 +273,6 @@ Empty line above.</code></pre>
         </div>
     </footer>
 
-    <script src="assets/app.js?v=10"></script>
+    <script src="assets/app.js?v=11"></script>
 </body>
 </html>
