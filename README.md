@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Featured-orange)](https://www.producthunt.com/products/docstripper)
 
-**DocStripper** automatically cleans text documents by removing page numbers, headers/footers, duplicate lines, and empty lines. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM).
+**DocStripper** — AI-powered batch document cleaner that automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM). Works entirely in your browser - 100% private, no uploads, no sign-ups. Perfect for students, researchers, and anyone working with scanned documents or PDFs.
 
 **🌐 [Try it online →](https://kiku-jw.github.io/DocStripper/)** — No installation needed!
 
