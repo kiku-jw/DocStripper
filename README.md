@@ -12,7 +12,7 @@
 
 **DocStripper** automatically cleans text documents by removing page numbers, headers/footers, duplicate lines, and empty lines. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM).
 
-**🌐 [Try it online →](https://kiku-jw.github.io/DocStripper2/)** — No installation needed!
+**🌐 [Try it online →](https://kiku-jw.github.io/DocStripper/)** — No installation needed!
 
 **Web App Features:**
 - ⚡ **Fast Clean** — Instant rule-based cleaning
@@ -50,8 +50,8 @@
 ### Installation
 
 ```bash
-git clone https://github.com/kiku-jw/DocStripper2.git
-cd DocStripper2
+git clone https://github.com/kiku-jw/DocStripper.git
+cd DocStripper
 ```
 
 ### Usage
@@ -158,6 +158,6 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 **Made with ❤️ for clean documents**
 
-[⭐ Star this repo](https://github.com/kiku-jw/DocStripper2) | [🌐 Try online](https://kiku-jw.github.io/DocStripper2/) | [🚀 Product Hunt](https://www.producthunt.com/products/docstripper) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper2/issues)
+[⭐ Star this repo](https://github.com/kiku-jw/DocStripper) | [🌐 Try online](https://kiku-jw.github.io/DocStripper/) | [🚀 Product Hunt](https://www.producthunt.com/products/docstripper) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper/issues)
 
 </div>
