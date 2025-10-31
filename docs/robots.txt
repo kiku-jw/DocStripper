@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kiku-jw.github.io/DocStripper/sitemap.xml
+
