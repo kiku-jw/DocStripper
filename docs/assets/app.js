@@ -174,14 +174,26 @@ class App {
         this.fileList = document.getElementById('fileList');
         this.resultsSection = document.getElementById('resultsSection');
         this.resultsContainer = document.getElementById('resultsContainer');
-        this.dryRunCheck = document.getElementById('dryRunCheck');
         this.clearBtn = document.getElementById('clearBtn');
+        
+        // Check if elements exist
+        if (!this.uploadArea || !this.fileInput) {
+            console.error('Required elements not found');
+            return;
+        }
     }
 
     setupEventListeners() {
-        // Click to upload
-        this.uploadArea.addEventListener('click', () => {
-            this.fileInput.click();
+        // Click to upload - ensure it works even if upload-content is clicked
+        this.uploadArea.addEventListener('click', (e) => {
+            // Don't trigger if clicking on remove button or other interactive elements
+            if (e.target.closest('.remove-file') || e.target.closest('.btn')) {
+                return;
+            }
+            // Trigger file input click
+            if (this.fileInput) {
+                this.fileInput.click();
+            }
         });
 
         // Drag and drop
@@ -338,7 +350,6 @@ class App {
                 return;
             }
 
-            const isDryRun = this.dryRunCheck.checked;
             const displayText = result.cleanedText;
 
             html += `
@@ -421,11 +432,18 @@ class App {
     }
 
     clearAll() {
+        if (this.files.length === 0) {
+            return;
+        }
+        
         this.files = [];
         this.results = [];
-        this.fileInput.value = '';
+        if (this.fileInput) {
+            this.fileInput.value = '';
+        }
         this.updateFileList();
         this.resultsSection.style.display = 'none';
+        this.showToast('All files cleared');
     }
 
     formatFileSize(bytes) {

@@ -171,6 +171,7 @@ body {
 
 .upload-content {
     pointer-events: none;
+    user-select: none;
 }
 
 .upload-icon {
