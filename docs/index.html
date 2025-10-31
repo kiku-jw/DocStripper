@@ -19,32 +19,44 @@
     </header>
 
     <main class="main">
-        <section class="hero">
+        <!-- File Upload Section -->
+        <section class="upload-section">
             <div class="container">
-                <div class="hero-content">
-                    <h2>Clean Your Documents in Seconds</h2>
-                    <p class="hero-description">
-                        DocStripper automatically removes page numbers, headers, footers, duplicate lines, and empty lines from your text documents.
-                        All processing happens <strong>offline</strong> using only Python standard library.
-                    </p>
-                    <div class="hero-badges">
-                        <span class="badge">Python 3.9+</span>
-                        <span class="badge">Offline Only</span>
-                        <span class="badge">MIT License</span>
-                        <span class="badge">No Dependencies</span>
+                <div class="upload-card">
+                    <h2>Upload Your Documents</h2>
+                    <p class="upload-description">Drop your files here or click to browse. All processing happens in your browser - your files never leave your computer!</p>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📄</div>
+                            <p class="upload-text">Drop files here or <span class="upload-link">click to browse</span></p>
+                            <p class="upload-hint">Supports: .txt, .docx files</p>
+                        </div>
+                        <input type="file" id="fileInput" multiple accept=".txt,.docx" style="display: none;">
                     </div>
-                    <div class="hero-actions">
-                        <a href="https://github.com/kiku-jw/DocStripper2" class="btn btn-primary" target="_blank">
-                            📦 View on GitHub
-                        </a>
-                        <a href="#installation" class="btn btn-secondary">
-                            🚀 Get Started
-                        </a>
+
+                    <div class="upload-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="dryRunCheck" checked>
+                            <span>Preview mode (dry-run)</span>
+                        </label>
+                        <button class="btn btn-secondary" id="clearBtn" style="display: none;">Clear All</button>
                     </div>
+
+                    <div id="fileList" class="file-list"></div>
                 </div>
             </div>
         </section>
 
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="container">
+                <h2>Cleaning Results</h2>
+                <div id="resultsContainer"></div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
         <section class="features">
             <div class="container">
                 <h2>Key Features</h2>
@@ -52,22 +64,22 @@
                     <div class="feature-card">
                         <div class="feature-icon">🚀</div>
                         <h3>Fast & Lightweight</h3>
-                        <p>Uses only Python stdlib, no external packages required</p>
+                        <p>Works entirely in your browser, no installation needed</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🔒</div>
-                        <h3>Privacy-First</h3>
-                        <p>All processing happens offline, no data sent anywhere</p>
+                        <h3>100% Private</h3>
+                        <p>All processing happens in your browser - files never leave your computer</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📊</div>
-                        <h3>Dry-Run Mode</h3>
-                        <p>Preview changes before applying them</p>
+                        <h3>Preview Mode</h3>
+                        <p>See changes before applying them</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🔄</div>
-                        <h3>Undo Support</h3>
-                        <p>Easily restore files from backups</p>
+                        <h3>Multiple Files</h3>
+                        <p>Process multiple files at once</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📈</div>
@@ -76,16 +88,17 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🌍</div>
-                        <h3>Cross-Platform</h3>
-                        <p>Works on Windows, macOS, and Linux</p>
+                        <h3>No Installation</h3>
+                        <p>Works on any device with a modern browser</p>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- Demo Section -->
         <section class="demo">
             <div class="container">
-                <h2>See It In Action</h2>
+                <h2>See What Gets Removed</h2>
                 <div class="demo-container">
                     <div class="demo-panel">
                         <h3>Before</h3>
@@ -136,106 +149,11 @@ Empty line above.</code></pre>
             </div>
         </section>
 
-        <section id="installation" class="installation">
+        <!-- CLI Section -->
+        <section class="cli-section">
             <div class="container">
-                <h2>Quick Start</h2>
-                <div class="installation-steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h3>Clone the Repository</h3>
-                            <pre><code>git clone https://github.com/kiku-jw/DocStripper2.git
-cd DocStripper2</code></pre>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h3>Make Executable (Optional)</h3>
-                            <pre><code>chmod +x tool.py</code></pre>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h3>Start Cleaning</h3>
-                            <pre><code>python tool.py document.txt</code></pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="examples">
-            <div class="container">
-                <h2>Usage Examples</h2>
-                <div class="example-grid">
-                    <div class="example-card">
-                        <h3>Clean a Single File</h3>
-                        <pre><code>python tool.py document.txt</code></pre>
-                    </div>
-                    <div class="example-card">
-                        <h3>Preview Changes</h3>
-                        <pre><code>python tool.py --dry-run document.txt</code></pre>
-                    </div>
-                    <div class="example-card">
-                        <h3>Batch Processing</h3>
-                        <pre><code>python tool.py *.txt *.docx</code></pre>
-                    </div>
-                    <div class="example-card">
-                        <h3>Undo Changes</h3>
-                        <pre><code>python tool.py --undo</code></pre>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="formats">
-            <div class="container">
-                <h2>Supported Formats</h2>
-                <div class="formats-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Format</th>
-                                <th>Support</th>
-                                <th>Requirements</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>.txt</code></td>
-                                <td>✅ Full</td>
-                                <td>UTF-8, Latin-1</td>
-                            </tr>
-                            <tr>
-                                <td><code>.docx</code></td>
-                                <td>✅ Basic</td>
-                                <td>Text extraction only</td>
-                            </tr>
-                            <tr>
-                                <td><code>.pdf</code></td>
-                                <td>✅ Basic</td>
-                                <td>Requires <code>pdftotext</code></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section class="cta">
-            <div class="container">
-                <h2>Ready to Clean Your Documents?</h2>
-                <p>Get started in minutes with DocStripper</p>
-                <div class="cta-actions">
-                    <a href="https://github.com/kiku-jw/DocStripper2" class="btn btn-primary" target="_blank">
-                        📦 View on GitHub
-                    </a>
-                    <a href="https://github.com/kiku-jw/DocStripper2/releases" class="btn btn-secondary" target="_blank">
-                        📥 Download Latest Release
-                    </a>
-                </div>
+                <h2>Prefer Command Line?</h2>
+                <p>You can also use DocStripper as a CLI tool. Check out our <a href="https://github.com/kiku-jw/DocStripper2#installation" target="_blank">GitHub repository</a> for installation instructions.</p>
             </div>
         </section>
     </main>
@@ -254,6 +172,7 @@ cd DocStripper2</code></pre>
             </div>
         </div>
     </footer>
+
+    <script src="assets/app.js"></script>
 </body>
 </html>
-
