@@ -264,6 +264,8 @@ class App {
         this.removePageNumbers = document.getElementById('removePageNumbers');
         this.removeHeadersFooters = document.getElementById('removeHeadersFooters');
         this.removeDuplicates = document.getElementById('removeDuplicates');
+        this.removePunctuationLines = document.getElementById('removePunctuationLines');
+        this.preserveParagraphSpacing = document.getElementById('preserveParagraphSpacing');
         
         // Check if elements exist
         if (!this.uploadArea || !this.fileInput) {
