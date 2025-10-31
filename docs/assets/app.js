@@ -259,6 +259,9 @@ class App {
         this.resultsSection = document.getElementById('resultsSection');
         this.resultsContainer = document.getElementById('resultsContainer');
         
+        // Start button
+        this.startBtn = document.getElementById('startBtn');
+        
         // Settings checkboxes
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
         this.removePageNumbers = document.getElementById('removePageNumbers');
@@ -389,47 +392,36 @@ class App {
             this.handleFiles(e.target.files);
         });
         
-        // Settings change - reprocess files when settings change
+        // Settings change - update start button state (don't reprocess automatically)
         if (this.removeEmptyLines) {
             this.removeEmptyLines.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                // Settings changed - don't auto-process, just update button state
+                this.updateStartButton();
             });
         }
         if (this.removePageNumbers) {
             this.removePageNumbers.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                this.updateStartButton();
             });
         }
         if (this.removeHeadersFooters) {
             this.removeHeadersFooters.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                this.updateStartButton();
             });
         }
         if (this.removeDuplicates) {
             this.removeDuplicates.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                this.updateStartButton();
             });
         }
         if (this.removePunctuationLines) {
             this.removePunctuationLines.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                this.updateStartButton();
             });
         }
         if (this.preserveParagraphSpacing) {
             this.preserveParagraphSpacing.addEventListener('change', () => {
-                if (this.files.length > 0) {
-                    this.processFiles();
-                }
+                this.updateStartButton();
             });
         }
     }
@@ -446,17 +438,33 @@ class App {
 
         this.files.push(...validFiles);
         this.updateFileList();
-        this.processFiles();
+        // Don't process files automatically - wait for user to click START button
         
         // Reset file input to allow selecting the same file again
         if (this.fileInput) {
             this.fileInput.value = '';
+        }
+        
+        // Show start button if files are uploaded
+        this.updateStartButton();
+    }
+
+    updateStartButton() {
+        if (this.startBtn) {
+            if (this.files.length > 0) {
+                this.startBtn.style.display = 'block';
+                this.startBtn.disabled = false;
+            } else {
+                this.startBtn.style.display = 'none';
+                this.startBtn.disabled = true;
+            }
         }
     }
 
     updateFileList() {
         if (this.files.length === 0) {
             this.fileList.innerHTML = '';
+            this.updateStartButton();
             return;
         }
 
@@ -482,13 +490,13 @@ class App {
                     }
                     this.updateFileList();
                     this.resultsSection.style.display = 'none';
-                } else {
-                    this.processFiles();
                 }
             });
             
             this.fileList.appendChild(fileItem);
         });
+        
+        this.updateStartButton();
     }
 
     async processFiles() {
