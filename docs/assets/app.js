@@ -1442,6 +1442,41 @@ async function init() {
         if (yearElement) {
             yearElement.textContent = new Date().getFullYear();
         }
+        
+        // Support button functionality
+        const supportBtn = document.getElementById('supportBtn');
+        const supportMenu = document.getElementById('supportMenu');
+        const supportClose = document.getElementById('supportClose');
+        
+        if (supportBtn && supportMenu) {
+            // Toggle menu on button click
+            supportBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                supportMenu.classList.toggle('show');
+            });
+            
+            // Close menu on close button click
+            if (supportClose) {
+                supportClose.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    supportMenu.classList.remove('show');
+                });
+            }
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!supportBtn.contains(e.target) && !supportMenu.contains(e.target)) {
+                    supportMenu.classList.remove('show');
+                }
+            });
+            
+            // Close menu on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && supportMenu.classList.contains('show')) {
+                    supportMenu.classList.remove('show');
+                }
+            });
+        }
     } catch (error) {
         console.error('Failed to initialize:', error);
         const errorDiv = document.createElement('div');
