@@ -7,17 +7,20 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.egg
 
 # DocStripper
 .strip-log
 *.bak
 
-# Test files
+# Test files (keep examples, ignore test files)
 test*.txt
+test*.bak
 edge_case.txt
 test_input.txt
 test_utf8.txt
-TEST_REPORT.md
+*_test.txt
+*_test.bak
 
 # IDE
 .vscode/
@@ -31,3 +34,9 @@ TEST_REPORT.md
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Build artifacts
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
