@@ -456,6 +456,14 @@ class App {
         
         // Show start button if files are uploaded
         this.updateStartButton();
+        
+        // Scroll to settings section to show uploaded files
+        setTimeout(() => {
+            const settingsSection = document.getElementById('settingsSection');
+            if (settingsSection) {
+                settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     }
 
     updateStartButton() {
