@@ -926,6 +926,62 @@ body {
     text-decoration: underline;
 }
 
+/* Product Hunt Badge */
+.product-hunt-badge {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.product-hunt-badge a {
+    display: inline-block;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    text-decoration: none;
+}
+
+.product-hunt-badge a:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.product-hunt-badge img {
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.product-hunt-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0 1rem;
+}
+
+.product-hunt-footer a {
+    display: inline-block;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    text-decoration: none;
+}
+
+.product-hunt-footer a:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.product-hunt-footer img {
+    display: block;
+    border-radius: 6px;
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .product-hunt-badge img,
+[data-theme="dark"] .product-hunt-footer img {
+    opacity: 0.95;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .logo {
@@ -989,6 +1045,17 @@ body {
     
     .demo-stats {
         gap: 2rem;
+    }
+    
+    .product-hunt-badge {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+    }
+    
+    .product-hunt-badge img,
+    .product-hunt-footer img {
+        width: 200px;
+        height: auto;
     }
 }
 
