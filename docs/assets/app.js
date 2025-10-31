@@ -796,6 +796,12 @@ async function init() {
         await loadJSZip();
         window.JSZip = JSZip;
         window.app = new App(); // Save app instance for testing
+        
+        // Update copyright year automatically
+        const yearElement = document.getElementById('currentYear');
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
     } catch (error) {
         console.error('Failed to initialize:', error);
         const errorDiv = document.createElement('div');
