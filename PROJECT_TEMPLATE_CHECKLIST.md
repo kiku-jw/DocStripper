@@ -2,6 +2,8 @@
 
 This checklist serves as a template for creating well-structured, SEO-optimized, and community-friendly open-source projects. Based on the DocStripper project experience.
 
+> **📦 Template Repository**: This checklist is part of the [Project Templates](https://github.com/kiku-jw/project-templates) repository. Clone it to get started with a new project!
+
 ## 📋 Repository Setup
 
 ### Initial Setup
