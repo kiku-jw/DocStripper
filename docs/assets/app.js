@@ -2426,6 +2426,92 @@ class App {
     }
 }
 
+// Customize Google Translate widget
+function customizeGoogleTranslate() {
+    // Wait for Google Translate to load
+    const checkTranslate = setInterval(() => {
+        const translateElement = document.getElementById('google_translate_element');
+        if (translateElement && translateElement.querySelector('select')) {
+            clearInterval(checkTranslate);
+            applyTranslateStyles();
+        }
+    }, 100);
+    
+    // Stop checking after 5 seconds
+    setTimeout(() => clearInterval(checkTranslate), 5000);
+}
+
+function applyTranslateStyles() {
+    const translateElement = document.getElementById('google_translate_element');
+    if (!translateElement) return;
+    
+    const select = translateElement.querySelector('select');
+    if (!select) return;
+    
+    // Create wrapper for icon
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    wrapper.style.width = '50px';
+    wrapper.style.height = '50px';
+    
+    // Create icon element
+    const icon = document.createElement('span');
+    icon.textContent = '🌐';
+    icon.style.position = 'absolute';
+    icon.style.left = '50%';
+    icon.style.top = '50%';
+    icon.style.transform = 'translate(-50%, -50%)';
+    icon.style.fontSize = '1.5rem';
+    icon.style.pointerEvents = 'none';
+    icon.style.zIndex = '1';
+    
+    // Wrap select with icon
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    wrapper.appendChild(icon);
+    
+    // Apply styles to select
+    select.style.background = 'rgba(255, 255, 255, 0.2)';
+    select.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+    select.style.color = 'transparent';
+    select.style.width = '50px';
+    select.style.height = '50px';
+    select.style.borderRadius = '12px';
+    select.style.fontSize = '0';
+    select.style.cursor = 'pointer';
+    select.style.transition = 'all 0.3s ease';
+    select.style.backdropFilter = 'blur(10px)';
+    select.style.outline = 'none';
+    select.style.webkitAppearance = 'none';
+    select.style.mozAppearance = 'none';
+    select.style.appearance = 'none';
+    select.style.padding = '0';
+    select.style.margin = '0';
+    select.style.display = 'flex';
+    select.style.alignItems = 'center';
+    select.style.justifyContent = 'center';
+    select.style.position = 'relative';
+    select.style.backgroundImage = 'none';
+    
+    // Hide all text elements
+    const menuValue = translateElement.querySelector('.goog-te-menu-value');
+    if (menuValue) {
+        menuValue.style.display = 'none';
+    }
+    
+    // Add hover effect
+    select.addEventListener('mouseenter', () => {
+        select.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+        select.style.transform = 'scale(1.05)';
+    });
+    
+    select.addEventListener('mouseleave', () => {
+        select.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+        select.style.transform = 'scale(1)';
+    });
+}
+
 // Theme Management
 class ThemeManager {
     constructor() {
@@ -2479,6 +2565,9 @@ async function init() {
     try {
         // Initialize theme manager first
         new ThemeManager();
+        
+        // Customize Google Translate widget after it loads
+        customizeGoogleTranslate();
         
         // Load JSZip and initialize app
         await loadJSZip();

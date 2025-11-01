@@ -7,6 +7,7 @@
 :root {
     --primary-color: #4a90e2;
     --primary-dark: #357abd;
+    --header-color: #4a90e2;
     --secondary-color: #64748b;
     --background: #ffffff;
     --surface: #f8fafc;
@@ -31,6 +32,7 @@
     --upload-border: #475569;
     --shadow: rgba(0, 0, 0, 0.3);
     --shadow-lg: rgba(0, 0, 0, 0.5);
+    --header-color: #1e3a5f;
 }
 
 body {
@@ -49,10 +51,11 @@ body {
 
 /* Header */
 .header {
-    background: var(--primary-color);
+    background: var(--header-color);
     color: white;
     padding: 2.5rem 0 2rem 0;
     box-shadow: 0 2px 10px var(--shadow);
+    transition: background-color 0.3s ease;
 }
 
 .header-content {
@@ -97,11 +100,13 @@ body {
 /* Google Translate Widget Styling - стилизовано под кнопку темы */
 #google_translate_element {
     display: inline-block;
+    position: relative;
 }
 
-/* Скрываем стандартный виджет Google Translate */
+/* Полностью скрываем стандартный виджет Google Translate */
 #google_translate_element .goog-te-gadget {
     font-size: 0 !important;
+    display: none !important;
 }
 
 #google_translate_element .goog-te-gadget-simple {
@@ -110,13 +115,17 @@ body {
     font-size: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Стилизуем select как квадратную кнопку с иконкой */
-#google_translate_element .goog-te-combo {
+#google_translate_element .goog-te-combo,
+#google_translate_element select {
     background: rgba(255, 255, 255, 0.2) !important;
     border: 2px solid rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
+    color: transparent !important;
     width: 50px !important;
     height: 50px !important;
     border-radius: 12px !important;
@@ -133,10 +142,13 @@ body {
     align-items: center !important;
     justify-content: center !important;
     position: relative !important;
+    margin: 0 !important;
+    background-image: none !important;
 }
 
 /* Добавляем иконку глобуса через псевдоэлемент */
-#google_translate_element .goog-te-combo:before {
+#google_translate_element .goog-te-combo:before,
+#google_translate_element select:before {
     content: "🌐" !important;
     font-size: 1.5rem !important;
     position: absolute !important;
@@ -144,25 +156,30 @@ body {
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
     pointer-events: none !important;
+    color: white !important;
+    z-index: 1 !important;
 }
 
-#google_translate_element .goog-te-combo:hover {
+/* Скрываем все текстовые элементы Google Translate */
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value,
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value span,
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+#google_translate_element .goog-te-combo:hover,
+#google_translate_element select:hover {
     background-color: rgba(255, 255, 255, 0.3) !important;
     transform: scale(1.05) !important;
 }
 
-#google_translate_element .goog-te-combo option {
+#google_translate_element .goog-te-combo option,
+#google_translate_element select option {
     background: var(--surface) !important;
     color: var(--text) !important;
-}
-
-/* Скрываем текст "Выбрать язык" */
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value span {
-    display: none !important;
-}
-
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
-    display: none !important;
+    font-size: 0.9rem !important;
 }
 
 .theme-toggle {
