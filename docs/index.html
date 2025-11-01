@@ -190,14 +190,7 @@
                                 <input type="checkbox" id="removeHeadersFooters" checked>
                                 <span class="setting-label">
                                     <span class="setting-title">Remove Headers/Footers</span>
-                                    <span class="setting-desc">Remove common patterns (Page X of Y, Confidential, etc.)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="removeRepeatingHeadersFooters" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Repeating Headers/Footers</span>
-                                    <span class="setting-desc">Remove headers/footers that repeat across pages</span>
+                                    <span class="setting-desc">Remove common patterns (Page X of Y, Confidential, etc.) and repeating headers/footers</span>
                                 </span>
                             </label>
                             <label class="setting-item">
@@ -228,28 +221,38 @@
                                     <span class="setting-desc">Keep one empty line between paragraphs</span>
                                 </span>
                             </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="mergeBrokenLines">
-                                <span class="setting-label">
-                                    <span class="setting-title">Merge Broken Lines</span>
-                                    <span class="setting-desc">Join lines broken mid-sentence (protects lists)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="normalizeWhitespace">
-                                <span class="setting-label">
-                                    <span class="setting-title">Normalize Whitespace</span>
-                                    <span class="setting-desc">Collapse multiple spaces, normalize tabs (protects tables)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="keepTableSpacing" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Keep Table Spacing</span>
-                                    <span class="setting-desc">Preserve spacing in detected table blocks</span>
-                                </span>
-                            </label>
                         </div>
+                        
+                        <!-- Advanced Options Section -->
+                        <details class="advanced-options">
+                            <summary class="advanced-options-toggle">
+                                <span>⚙️ Advanced Options</span>
+                                <span class="advanced-options-count">(3)</span>
+                            </summary>
+                            <div class="settings-grid advanced-options-content">
+                                <label class="setting-item">
+                                    <input type="checkbox" id="mergeBrokenLines">
+                                    <span class="setting-label">
+                                        <span class="setting-title">Merge Broken Lines</span>
+                                        <span class="setting-desc">Join lines broken mid-sentence (protects lists)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="normalizeWhitespace">
+                                    <span class="setting-label">
+                                        <span class="setting-title">Normalize Whitespace</span>
+                                        <span class="setting-desc">Collapse multiple spaces, normalize tabs (protects tables)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="keepTableSpacing" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Keep Table Spacing</span>
+                                        <span class="setting-desc">Preserve spacing in detected table blocks</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </details>
                         <button class="btn btn-primary start-btn" id="startBtn" style="margin-top: 1.5rem; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; display: none;">
                             🚀 Start Cleaning
                         </button>

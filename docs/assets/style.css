@@ -260,7 +260,69 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
+    margin-bottom: 1.5rem;
 }
+
+/* Advanced Options Section */
+.advanced-options {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.advanced-options-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text);
+    user-select: none;
+    transition: background-color 0.2s ease;
+    list-style: none;
+}
+
+.advanced-options-toggle:hover {
+    background: var(--background);
+}
+
+.advanced-options-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.advanced-options-toggle::marker {
+    display: none;
+}
+
+.advanced-options-toggle::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 0.5rem;
+    transition: transform 0.2s ease;
+    font-size: 0.75rem;
+    color: var(--primary-color);
+}
+
+.advanced-options[open] .advanced-options-toggle::before {
+    transform: rotate(90deg);
+}
+
+.advanced-options-count {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    font-weight: normal;
+}
+
+.advanced-options-content {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.setting-item {
 
 .setting-item {
     display: flex;

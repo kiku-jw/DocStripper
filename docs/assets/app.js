@@ -1230,7 +1230,7 @@ class App {
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
         this.removePageNumbers = document.getElementById('removePageNumbers');
         this.removeHeadersFooters = document.getElementById('removeHeadersFooters');
-        this.removeRepeatingHeadersFooters = document.getElementById('removeRepeatingHeadersFooters');
+        // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
         this.removeDuplicates = document.getElementById('removeDuplicates');
         this.removePunctuationLines = document.getElementById('removePunctuationLines');
         this.dehyphenate = document.getElementById('dehyphenate');
@@ -1313,9 +1313,7 @@ class App {
                 if (settings.removeHeadersFooters !== undefined && this.removeHeadersFooters) {
                     this.removeHeadersFooters.checked = settings.removeHeadersFooters;
                 }
-                if (settings.removeRepeatingHeadersFooters !== undefined && this.removeRepeatingHeadersFooters) {
-                    this.removeRepeatingHeadersFooters.checked = settings.removeRepeatingHeadersFooters;
-                }
+                // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
                 if (settings.removeDuplicates !== undefined && this.removeDuplicates) {
                     this.removeDuplicates.checked = settings.removeDuplicates;
                 }
@@ -1358,7 +1356,7 @@ class App {
                 removeEmptyLines: this.removeEmptyLines?.checked ?? true,
                 removePageNumbers: this.removePageNumbers?.checked ?? true,
                 removeHeadersFooters: this.removeHeadersFooters?.checked ?? true,
-                removeRepeatingHeadersFooters: this.removeRepeatingHeadersFooters?.checked ?? true,
+                removeRepeatingHeadersFooters: this.removeHeadersFooters?.checked ?? true, // Automatically enabled when removeHeadersFooters is enabled
                 removeDuplicates: this.removeDuplicates?.checked ?? true,
                 removePunctuationLines: this.removePunctuationLines?.checked ?? true,
                 preserveParagraphSpacing: this.preserveParagraphSpacing?.checked ?? true,
@@ -1379,7 +1377,7 @@ class App {
             if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
             if (this.removePageNumbers) this.removePageNumbers.checked = true;
             if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
-            if (this.removeRepeatingHeadersFooters) this.removeRepeatingHeadersFooters.checked = true;
+            // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
             if (this.removeDuplicates) this.removeDuplicates.checked = true;
             if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
             if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
@@ -1392,7 +1390,7 @@ class App {
             if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
             if (this.removePageNumbers) this.removePageNumbers.checked = true;
             if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
-            if (this.removeRepeatingHeadersFooters) this.removeRepeatingHeadersFooters.checked = true;
+            // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
             if (this.removeDuplicates) this.removeDuplicates.checked = true;
             if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
             if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
@@ -1524,12 +1522,7 @@ class App {
                 this.updateStartButton();
             });
         }
-        if (this.removeRepeatingHeadersFooters) {
-            this.removeRepeatingHeadersFooters.addEventListener('change', () => {
-                this.saveSettings();
-                this.updateStartButton();
-            });
-        }
+        // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
         if (this.removeDuplicates) {
             this.removeDuplicates.addEventListener('change', () => {
                 this.saveSettings();
@@ -1760,7 +1753,7 @@ class App {
             removeEmptyLines: this.removeEmptyLines ? this.removeEmptyLines.checked : true,
             removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
             removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true,
-            removeRepeatingHeadersFooters: this.removeRepeatingHeadersFooters ? this.removeRepeatingHeadersFooters.checked : true,
+            removeRepeatingHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true, // Automatically enabled when removeHeadersFooters is enabled
             removeDuplicates: this.removeDuplicates ? this.removeDuplicates.checked : true,
             removePunctuationLines: this.removePunctuationLines ? this.removePunctuationLines.checked : true,
             preserveParagraphSpacing: this.preserveParagraphSpacing ? this.preserveParagraphSpacing.checked : true,
@@ -1968,9 +1961,10 @@ class App {
     
     formatStatsLine(stats, originalLineCount) {
         const cleanedLineCount = originalLineCount - (stats.linesRemoved || 0);
+        const totalHeadersFooters = (stats.headerFooterRemoved || 0) + (stats.repeatingHeadersFootersRemoved || 0);
         const parts = [
             `Lines: ${originalLineCount} → ${cleanedLineCount}`,
-            `Removed: ${stats.emptyLinesRemoved || 0} empty, ${stats.headerFooterRemoved || 0} headers/footers, ${stats.punctuationLinesRemoved || 0} punctuation`,
+            `Removed: ${stats.emptyLinesRemoved || 0} empty, ${totalHeadersFooters} headers/footers, ${stats.punctuationLinesRemoved || 0} punctuation`,
             `Collapsed: ${stats.duplicatesCollapsed || 0} duplicates`,
         ];
         
@@ -1979,9 +1973,6 @@ class App {
         }
         if (stats.dehyphenatedTokens) {
             parts.push(`${stats.dehyphenatedTokens} dehyphenated`);
-        }
-        if (stats.repeatingHeadersFootersRemoved) {
-            parts.push(`${stats.repeatingHeadersFootersRemoved} repeating headers/footers`);
         }
         
         return parts.join(' | ');
@@ -2012,7 +2003,7 @@ class App {
                         <span class="stat-label">Empty Lines Removed</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${totalStats.headerFooterRemoved}</span>
+                        <span class="stat-value">${totalStats.headerFooterRemoved + (totalStats.repeatingHeadersFootersRemoved || 0)}</span>
                         <span class="stat-label">Headers/Footers Removed</span>
                     </div>
                     ${totalStats.punctuationLinesRemoved > 0 ? `
@@ -2025,12 +2016,6 @@ class App {
                     <div class="stat-item">
                         <span class="stat-value">${totalStats.dehyphenatedTokens}</span>
                         <span class="stat-label">Dehyphenated Tokens</span>
-                    </div>
-                    ` : ''}
-                    ${totalStats.repeatingHeadersFootersRemoved > 0 ? `
-                    <div class="stat-item">
-                        <span class="stat-value">${totalStats.repeatingHeadersFootersRemoved}</span>
-                        <span class="stat-label">Repeating Headers/Footers Removed</span>
                     </div>
                     ` : ''}
                     ${totalStats.mergedLines > 0 ? `
