@@ -636,16 +636,64 @@ class DocStripper {
         });
     }
 
+    async extractTextFromPDF(file) {
+        return new Promise((resolve, reject) => {
+            // Check if PDF.js is loaded
+            if (typeof pdfjsLib === 'undefined') {
+                reject(new Error('PDF.js library not loaded. Please refresh the page.'));
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const arrayBuffer = e.target.result;
+                    
+                    // Set worker source for PDF.js
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    
+                    // Load PDF document
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                    const pdf = await loadingTask.promise;
+                    
+                    const textParts = [];
+                    
+                    // Extract text from all pages
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const textContent = await page.getTextContent();
+                        
+                        // Combine text items with spaces, preserving line breaks
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        textParts.push(pageText);
+                        
+                        // Add page break between pages (except last page)
+                        if (pageNum < pdf.numPages) {
+                            textParts.push('');
+                        }
+                    }
+                    
+                    resolve(textParts.join('\n'));
+                } catch (error) {
+                    reject(new Error(`Failed to extract text from PDF: ${error.message}`));
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
     async readTextFile(file) {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = reject;
-            
             if (file.name.endsWith('.txt')) {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
                 reader.readAsText(file, 'UTF-8');
             } else if (file.name.endsWith('.docx')) {
                 this.extractTextFromDocx(file).then(resolve).catch(reject);
+            } else if (file.name.endsWith('.pdf')) {
+                this.extractTextFromPDF(file).then(resolve).catch(reject);
             } else {
                 reject(new Error('Unsupported file type'));
             }
@@ -1898,11 +1946,11 @@ class App {
 
     handleFiles(files) {
         const validFiles = Array.from(files).filter(file => 
-            file.name.endsWith('.txt') || file.name.endsWith('.docx')
+            file.name.endsWith('.txt') || file.name.endsWith('.docx') || file.name.endsWith('.pdf')
         );
 
         if (validFiles.length === 0) {
-            this.showToast('Please upload .txt or .docx files only.', 'error');
+            this.showToast('Please upload .txt, .docx, or .pdf files only.', 'error');
             return;
         }
 
