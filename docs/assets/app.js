@@ -663,9 +663,33 @@ class DocStripper {
                         const page = await pdf.getPage(pageNum);
                         const textContent = await page.getTextContent();
                         
-                        // Combine text items with spaces, preserving line breaks
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        textParts.push(pageText);
+                        // Combine text items, preserving line structure
+                        // Group items by their Y position to detect lines
+                        const lines = [];
+                        let currentLine = [];
+                        let lastY = null;
+                        
+                        for (const item of textContent.items) {
+                            const y = item.transform[5]; // Y position from transform matrix
+                            
+                            // If Y position changed significantly (new line), start new line
+                            if (lastY !== null && Math.abs(y - lastY) > 5) {
+                                if (currentLine.length > 0) {
+                                    lines.push(currentLine.map(item => item.str).join(''));
+                                    currentLine = [];
+                                }
+                            }
+                            
+                            currentLine.push(item);
+                            lastY = y;
+                        }
+                        
+                        // Add last line
+                        if (currentLine.length > 0) {
+                            lines.push(currentLine.map(item => item.str).join(''));
+                        }
+                        
+                        textParts.push(lines.join('\n'));
                         
                         // Add page break between pages (except last page)
                         if (pageNum < pdf.numPages) {
