@@ -2535,6 +2535,8 @@ class ThemeManager {
         document.documentElement.setAttribute('data-theme', this.currentTheme);
         localStorage.setItem('theme', this.currentTheme);
         this.updateIcon();
+        // Reapply Google Translate styles when theme changes
+        setTimeout(() => applyTranslateStyles(), 100);
     }
 
     updateIcon() {
