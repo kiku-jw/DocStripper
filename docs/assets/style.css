@@ -101,12 +101,16 @@ body {
 #google_translate_element {
     display: inline-block;
     position: relative;
+    width: 50px;
+    height: 50px;
 }
 
-/* Полностью скрываем стандартный виджет Google Translate */
+/* Показываем виджет, но скрываем текст */
 #google_translate_element .goog-te-gadget {
     font-size: 0 !important;
-    display: none !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 #google_translate_element .goog-te-gadget-simple {
@@ -118,9 +122,71 @@ body {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 50px !important;
+    height: 50px !important;
 }
 
-/* Стилизуем select как квадратную кнопку с иконкой */
+/* Стилизуем ссылку как квадратную кнопку */
+#google_translate_element .goog-te-gadget-simple a,
+#google_translate_element a.VIpgJd-ZVi9od-xl07Ob-lTBxed {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    color: transparent !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 12px !important;
+    font-size: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    text-decoration: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Добавляем иконку глобуса через псевдоэлемент */
+#google_translate_element .goog-te-gadget-simple a:before,
+#google_translate_element a.VIpgJd-ZVi9od-xl07Ob-lTBxed:before {
+    content: "🌐" !important;
+    font-size: 1.5rem !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: none !important;
+    color: white !important;
+    z-index: 1 !important;
+}
+
+/* Скрываем все текстовые элементы и изображения внутри ссылки */
+#google_translate_element .goog-te-gadget-simple a *,
+#google_translate_element a.VIpgJd-ZVi9od-xl07Ob-lTBxed * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Скрываем иконку Google Translate */
+#google_translate_element .goog-te-gadget-icon {
+    display: none !important;
+}
+
+/* Hover эффект */
+#google_translate_element .goog-te-gadget-simple a:hover,
+#google_translate_element a.VIpgJd-ZVi9od-xl07Ob-lTBxed:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Стили для select (если используется другой формат) */
 #google_translate_element .goog-te-combo,
 #google_translate_element select {
     background: rgba(255, 255, 255, 0.2) !important;
@@ -146,7 +212,6 @@ body {
     background-image: none !important;
 }
 
-/* Добавляем иконку глобуса через псевдоэлемент */
 #google_translate_element .goog-te-combo:before,
 #google_translate_element select:before {
     content: "🌐" !important;
@@ -160,26 +225,10 @@ body {
     z-index: 1 !important;
 }
 
-/* Скрываем все текстовые элементы Google Translate */
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value,
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value span,
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value * {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-}
-
 #google_translate_element .goog-te-combo:hover,
 #google_translate_element select:hover {
     background-color: rgba(255, 255, 255, 0.3) !important;
     transform: scale(1.05) !important;
-}
-
-#google_translate_element .goog-te-combo option,
-#google_translate_element select option {
-    background: var(--surface) !important;
-    color: var(--text) !important;
-    font-size: 0.9rem !important;
 }
 
 .theme-toggle {
