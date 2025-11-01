@@ -472,42 +472,60 @@ class DocStripper {
         const pageBoundaries = this.detectPages(text);
         const repeatingHeadersFooters = this.detectRepeatingHeadersFooters(text, pageBoundaries);
         
+        // Track if previous line was removed (to avoid leaving multiple empty lines)
+        let prevLineRemoved = false;
+        
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const stripped = line.trim();
             
+            // Check if this line should be removed
+            let shouldRemove = false;
+            
             // Skip headers/footers (if enabled) - BEFORE merge
             if (this.options.removeHeadersFooters && this.isHeaderFooter(stripped)) {
                 headerFooterRemovedBeforeMerge++;
-                continue;
+                shouldRemove = true;
             }
             
             // Skip page numbers (if enabled) - BEFORE merge
-            if (this.options.removePageNumbers && this.isPageNumber(stripped)) {
+            if (!shouldRemove && this.options.removePageNumbers && this.isPageNumber(stripped)) {
                 headerFooterRemovedBeforeMerge++;
-                continue;
+                shouldRemove = true;
             }
             
             // Skip repeating headers/footers across pages (if enabled) - BEFORE merge
-            if (this.options.removeRepeatingHeadersFooters && repeatingHeadersFooters.has(stripped)) {
+            if (!shouldRemove && this.options.removeRepeatingHeadersFooters && repeatingHeadersFooters.has(stripped)) {
                 headerFooterRemovedBeforeMerge++;
+                shouldRemove = true;
+            }
+            
+            if (shouldRemove) {
+                prevLineRemoved = true;
                 continue;
             }
             
+            // If previous line was removed and this is empty, skip it to avoid double empty lines
+            if (prevLineRemoved && !stripped) {
+                prevLineRemoved = false;
+                continue;
+            }
+            
+            prevLineRemoved = false;
             preMergeLines.push(line);
         }
         
         text = preMergeLines.join('\n');
         
-        // Apply merge broken lines (after removing headers/footers)
+        // Apply merge broken lines ONLY if enabled (after removing headers/footers)
         const mergeResult = this.mergeBrokenLines(text);
         text = mergeResult.text;
         
-        // Apply whitespace normalization (with table protection if enabled)
+        // Apply whitespace normalization ONLY if enabled (with table protection if enabled)
         const whitespaceResult = this.normalizeWhitespace(text, this.options.keepTableSpacing);
         text = whitespaceResult.text;
         
-        // Apply Unicode punctuation normalization (limited, only punctuation)
+        // Apply Unicode punctuation normalization ONLY if enabled (limited, only punctuation)
         const unicodeResult = this.normalizeUnicodePunctuation(text);
         text = unicodeResult.text;
 
