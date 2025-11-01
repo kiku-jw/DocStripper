@@ -2460,54 +2460,84 @@ function applyTranslateStyles() {
     const select = translateElement.querySelector('select');
     
     if (link) {
+        // Apply styles directly with !important using setProperty
+        link.style.setProperty('background', 'rgba(255, 255, 255, 0.2)', 'important');
+        link.style.setProperty('border', '2px solid rgba(255, 255, 255, 0.3)', 'important');
+        link.style.setProperty('width', '50px', 'important');
+        link.style.setProperty('height', '50px', 'important');
+        link.style.setProperty('border-radius', '12px', 'important');
+        link.style.setProperty('display', 'flex', 'important');
+        link.style.setProperty('align-items', 'center', 'important');
+        link.style.setProperty('justify-content', 'center', 'important');
+        link.style.setProperty('padding', '0', 'important');
+        link.style.setProperty('margin', '0', 'important');
+        link.style.setProperty('color', 'transparent', 'important');
+        link.style.setProperty('font-size', '0', 'important');
+        link.style.setProperty('text-decoration', 'none', 'important');
+        link.style.setProperty('box-sizing', 'border-box', 'important');
+        link.style.setProperty('cursor', 'pointer', 'important');
+        link.style.setProperty('transition', 'all 0.3s ease', 'important');
+        link.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
+        
         // Hide all children inside the link
         Array.from(link.children).forEach(child => {
-            child.style.display = 'none';
-            child.style.visibility = 'hidden';
-            child.style.opacity = '0';
+            child.style.setProperty('display', 'none', 'important');
+            child.style.setProperty('visibility', 'hidden', 'important');
+            child.style.setProperty('opacity', '0', 'important');
         });
         
         // Hide all images
         const images = link.querySelectorAll('img');
         images.forEach(img => {
-            img.style.display = 'none';
+            img.style.setProperty('display', 'none', 'important');
+            img.style.setProperty('visibility', 'hidden', 'important');
+            img.style.setProperty('opacity', '0', 'important');
         });
         
-        // Ensure link has correct styles
-        link.style.display = 'flex';
-        link.style.alignItems = 'center';
-        link.style.justifyContent = 'center';
+        // Hide text content
+        link.textContent = '';
+        
+        // Add hover effect
+        link.addEventListener('mouseenter', () => {
+            link.style.setProperty('background-color', 'rgba(255, 255, 255, 0.3)', 'important');
+            link.style.setProperty('transform', 'scale(1.05)', 'important');
+        });
+        
+        link.addEventListener('mouseleave', () => {
+            link.style.setProperty('background-color', 'rgba(255, 255, 255, 0.2)', 'important');
+            link.style.setProperty('transform', 'scale(1)', 'important');
+        });
     }
     
     if (select) {
         // Apply styles to select
-        select.style.background = 'rgba(255, 255, 255, 0.2)';
-        select.style.border = '2px solid rgba(255, 255, 255, 0.3)';
-        select.style.color = 'transparent';
-        select.style.width = '50px';
-        select.style.height = '50px';
-        select.style.borderRadius = '12px';
-        select.style.fontSize = '0';
-        select.style.cursor = 'pointer';
-        select.style.transition = 'all 0.3s ease';
-        select.style.backdropFilter = 'blur(10px)';
-        select.style.outline = 'none';
-        select.style.webkitAppearance = 'none';
-        select.style.mozAppearance = 'none';
-        select.style.appearance = 'none';
-        select.style.padding = '0';
-        select.style.margin = '0';
-        select.style.display = 'flex';
-        select.style.alignItems = 'center';
-        select.style.justifyContent = 'center';
-        select.style.position = 'relative';
-        select.style.backgroundImage = 'none';
+        select.style.setProperty('background', 'rgba(255, 255, 255, 0.2)', 'important');
+        select.style.setProperty('border', '2px solid rgba(255, 255, 255, 0.3)', 'important');
+        select.style.setProperty('color', 'transparent', 'important');
+        select.style.setProperty('width', '50px', 'important');
+        select.style.setProperty('height', '50px', 'important');
+        select.style.setProperty('border-radius', '12px', 'important');
+        select.style.setProperty('font-size', '0', 'important');
+        select.style.setProperty('cursor', 'pointer', 'important');
+        select.style.setProperty('transition', 'all 0.3s ease', 'important');
+        select.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
+        select.style.setProperty('outline', 'none', 'important');
+        select.style.setProperty('-webkit-appearance', 'none', 'important');
+        select.style.setProperty('-moz-appearance', 'none', 'important');
+        select.style.setProperty('appearance', 'none', 'important');
+        select.style.setProperty('padding', '0', 'important');
+        select.style.setProperty('margin', '0', 'important');
+        select.style.setProperty('display', 'flex', 'important');
+        select.style.setProperty('align-items', 'center', 'important');
+        select.style.setProperty('justify-content', 'center', 'important');
+        select.style.setProperty('position', 'relative', 'important');
+        select.style.setProperty('background-image', 'none', 'important');
     }
     
     // Hide Google Translate icon
     const icon = translateElement.querySelector('.goog-te-gadget-icon');
     if (icon) {
-        icon.style.display = 'none';
+        icon.style.setProperty('display', 'none', 'important');
     }
 }
 
