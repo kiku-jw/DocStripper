@@ -61,7 +61,7 @@
     }
     </script>
     
-    <link rel="stylesheet" href="assets/style.css?v=30">
+    <link rel="stylesheet" href="assets/style.css?v=31">
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="apple-touch-icon" href="assets/icon.svg">
 </head>
@@ -151,7 +151,7 @@
                         </div>
                         
                         <!-- Cleaning Mode Selector: Conservative vs Aggressive -->
-                        <div class="cleaning-mode-selector" style="margin-top: 1.5rem; margin-bottom: 1rem;">
+                        <div class="cleaning-mode-selector" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
                             <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Cleaning Mode:</label>
                             <div style="display: flex; gap: 1rem;">
                                 <label class="mode-option">
@@ -171,65 +171,62 @@
                             </div>
                         </div>
                         
-                        <div class="settings-grid">
-                            <label class="setting-item">
-                                <input type="checkbox" id="removeEmptyLines" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Empty Lines</span>
-                                    <span class="setting-desc">Remove blank and whitespace-only lines</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="removePageNumbers" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Page Numbers</span>
-                                    <span class="setting-desc">Remove lines with only digits (1, 2, 3...)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="removeHeadersFooters" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Headers/Footers</span>
-                                    <span class="setting-desc">Remove common patterns (Page X of Y, Confidential, etc.) and repeating headers/footers</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="removeDuplicates" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Duplicates</span>
-                                    <span class="setting-desc">Collapse consecutive identical lines</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="removePunctuationLines" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Remove Punctuation Lines</span>
-                                    <span class="setting-desc">Remove lines with only symbols (---, ***, ===)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="dehyphenate" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Dehyphenate</span>
-                                    <span class="setting-desc">Join words broken across lines (auto-\nmatic → automatic)</span>
-                                </span>
-                            </label>
-                            <label class="setting-item">
-                                <input type="checkbox" id="preserveParagraphSpacing" checked>
-                                <span class="setting-label">
-                                    <span class="setting-title">Preserve Paragraph Spacing</span>
-                                    <span class="setting-desc">Keep one empty line between paragraphs</span>
-                                </span>
-                            </label>
-                        </div>
-                        
                         <!-- Advanced Options Section -->
                         <details class="advanced-options">
                             <summary class="advanced-options-toggle">
                                 <span>⚙️ Advanced Options</span>
-                                <span class="advanced-options-count">(3)</span>
+                                <span class="advanced-options-count">(10)</span>
                             </summary>
                             <div class="settings-grid advanced-options-content">
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeEmptyLines" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Empty Lines</span>
+                                        <span class="setting-desc">Remove blank and whitespace-only lines</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removePageNumbers" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Page Numbers</span>
+                                        <span class="setting-desc">Remove lines with only digits (1, 2, 3...)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeHeadersFooters" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Headers/Footers</span>
+                                        <span class="setting-desc">Remove common patterns (Page X of Y, Confidential, etc.) and repeating headers/footers</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeDuplicates" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Duplicates</span>
+                                        <span class="setting-desc">Collapse consecutive identical lines</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removePunctuationLines" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Punctuation Lines</span>
+                                        <span class="setting-desc">Remove lines with only symbols (---, ***, ===)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="dehyphenate" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Dehyphenate</span>
+                                        <span class="setting-desc">Join words broken across lines (auto-\nmatic → automatic)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="preserveParagraphSpacing" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Preserve Paragraph Spacing</span>
+                                        <span class="setting-desc">Keep one empty line between paragraphs</span>
+                                    </span>
+                                </label>
                                 <label class="setting-item">
                                     <input type="checkbox" id="mergeBrokenLines">
                                     <span class="setting-label">
