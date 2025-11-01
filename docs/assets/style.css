@@ -721,6 +721,115 @@ body {
     flex-wrap: wrap;
 }
 
+/* Side-by-side diff container */
+.diff-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.diff-column {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.diff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.diff-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.diff-column.original-column .diff-header h5 {
+    color: var(--error);
+}
+
+.diff-column.cleaned-column .diff-header h5 {
+    color: var(--success);
+}
+
+.diff-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.diff-actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.diff-content {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 600px;
+    padding: 1rem;
+    background: var(--surface);
+}
+
+.text-preview-content {
+    margin: 0;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+}
+
+/* Virtualization styles */
+.virtualized-container {
+    position: relative;
+}
+
+.virtualized-spacer-top,
+.virtualized-spacer-bottom {
+    width: 100%;
+}
+
+.virtualized-content {
+    margin: 0;
+}
+
+/* Stats line */
+.stats-line {
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-light);
+    border: 1px solid var(--border);
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+/* Responsive: stack columns on mobile */
+@media (max-width: 768px) {
+    .diff-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .diff-content {
+        max-height: 400px;
+    }
+}
+
 .btn {
     display: inline-block;
     padding: 0.875rem 1.75rem;

@@ -61,7 +61,7 @@
     }
     </script>
     
-    <link rel="stylesheet" href="assets/style.css?v=25">
+    <link rel="stylesheet" href="assets/style.css?v=29">
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="apple-touch-icon" href="assets/icon.svg">
 </head>
@@ -150,6 +150,27 @@
                             <button class="btn btn-secondary cancel-btn" id="cancelBtn" style="display: none;">Cancel</button>
                         </div>
                         
+                        <!-- Cleaning Mode Selector: Conservative vs Aggressive -->
+                        <div class="cleaning-mode-selector" style="margin-top: 1.5rem; margin-bottom: 1rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Cleaning Mode:</label>
+                            <div style="display: flex; gap: 1rem;">
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningModeType" id="conservativeMode" value="conservative" checked>
+                                    <span class="mode-label">
+                                        <span class="mode-title">🛡️ Conservative</span>
+                                        <span class="mode-desc">Safe defaults (recommended)</span>
+                                    </span>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningModeType" id="aggressiveMode" value="aggressive">
+                                    <span class="mode-label">
+                                        <span class="mode-title">⚡ Aggressive</span>
+                                        <span class="mode-desc">More aggressive cleaning</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
                         <div class="settings-grid">
                             <label class="setting-item">
                                 <input type="checkbox" id="removeEmptyLines" checked>
@@ -173,6 +194,13 @@
                                 </span>
                             </label>
                             <label class="setting-item">
+                                <input type="checkbox" id="removeRepeatingHeadersFooters" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Remove Repeating Headers/Footers</span>
+                                    <span class="setting-desc">Remove headers/footers that repeat across pages</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
                                 <input type="checkbox" id="removeDuplicates" checked>
                                 <span class="setting-label">
                                     <span class="setting-title">Remove Duplicates</span>
@@ -187,10 +215,38 @@
                                 </span>
                             </label>
                             <label class="setting-item">
+                                <input type="checkbox" id="dehyphenate" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Dehyphenate</span>
+                                    <span class="setting-desc">Join words broken across lines (auto-\nmatic → automatic)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
                                 <input type="checkbox" id="preserveParagraphSpacing" checked>
                                 <span class="setting-label">
                                     <span class="setting-title">Preserve Paragraph Spacing</span>
                                     <span class="setting-desc">Keep one empty line between paragraphs</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="mergeBrokenLines">
+                                <span class="setting-label">
+                                    <span class="setting-title">Merge Broken Lines</span>
+                                    <span class="setting-desc">Join lines broken mid-sentence (protects lists)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="normalizeWhitespace">
+                                <span class="setting-label">
+                                    <span class="setting-title">Normalize Whitespace</span>
+                                    <span class="setting-desc">Collapse multiple spaces, normalize tabs (protects tables)</span>
+                                </span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="keepTableSpacing" checked>
+                                <span class="setting-label">
+                                    <span class="setting-title">Keep Table Spacing</span>
+                                    <span class="setting-desc">Preserve spacing in detected table blocks</span>
                                 </span>
                             </label>
                         </div>
@@ -435,6 +491,6 @@ Empty line above.</code></pre>
         </div>
     </div>
 
-    <script src="assets/app.js?v=21"></script>
+    <script src="assets/app.js?v=24"></script>
 </body>
 </html>

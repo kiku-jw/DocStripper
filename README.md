@@ -29,7 +29,11 @@
 ### Web Application
 - 🚀 **Fast Clean** — Rule-based cleaning (instant)
 - 🤖 **Smart Clean (Beta)** — AI-powered cleaning using on-device LLM (WebLLM)
+- 🛡️ **Conservative Mode** — Safe defaults (recommended, preserves lists and tables)
+- ⚡ **Aggressive Mode** — More aggressive cleaning with merge and whitespace normalization
 - ⚙️ **Customizable Options** — Configure what gets removed
+- 🔄 **Side-by-Side Preview** — Compare Original | Cleaned with virtualization for large files
+- 💾 **Settings Persistence** — Your preferences are saved automatically
 - 🔒 **100% Private** — All processing happens in your browser
 - 📊 **Real-time Statistics** — See exactly what was removed
 - 📥 **Download & Copy** — Download cleaned files or copy to clipboard
@@ -77,8 +81,10 @@ python tool.py --undo
 **Before:**
 ```
 Page 1 of 10
-Confidential
-
+Confidential - Internal Use Only
+Executive Summary
+This is auto-
+matic text processing.
 Important content here.
 Important content here.
 
@@ -87,22 +93,74 @@ Important content here.
 3
 
 Page 2 of 10
+Confidential - Internal Use Only
+More content.
 ```
 
-**After:**
+**After (Conservative Mode):**
 ```
+Executive Summary
+This is automatic text processing.
 Important content here.
+More content.
 ```
+
+**After (Aggressive Mode):**
+```
+Executive Summary
+This is automatic text processing. Important content here.
+More content.
+```
+
+**Key Changes:**
+- Page numbers removed (1, 2, 3)
+- Headers/footers removed (Page X of Y, Confidential)
+- Repeating headers removed (Confidential - Internal Use Only appeared on 2/2 pages)
+- Duplicates collapsed (Important content here.)
+- Hyphenation fixed (auto-\nmatic → automatic)
+- Empty lines removed
+- *(Aggressive mode also merged broken lines)*
 
 ---
 
 ## 🎨 What Gets Removed?
 
+### Basic Cleaning (Conservative Mode - Default)
 - **Page numbers** — Lines with only digits (1, 2, 3...), Roman numerals (I, II, III), or letters (A, B, C)
 - **Headers/Footers** — Common patterns like "Page X of Y", "Confidential", "DRAFT", "INTERNAL USE ONLY"
+- **Repeating Headers/Footers** — Headers/footers that appear on ≥70% of pages (detected automatically)
 - **Duplicate lines** — Consecutive identical lines
 - **Empty lines** — Whitespace-only lines (optional: preserve paragraph spacing)
-- **Punctuation lines** — Lines with only symbols (---, ***, ===)
+- **Punctuation lines** — Lines with only symbols (---, ***, ===) or single bullets (•, *, ·)
+- **Hyphenation** — Safe dehyphenation: "auto-\nmatic" → "automatic" (only lowercase continuations)
+
+### Advanced Cleaning (Aggressive Mode)
+All Conservative features plus:
+- **Merge Broken Lines** — Merge lines broken mid-sentence (protects lists and tables)
+- **Whitespace Normalization** — Collapse multiple spaces, normalize tabs (protects tables)
+- **Unicode Punctuation** — Normalize curly quotes and dashes to ASCII (optional, default OFF)
+
+### Protection Features
+- **List Protection** — Bullet and numbered lists are never merged or broken
+- **Table Protection** — Table spacing is preserved when normalization is enabled
+- **Content Safety** — Content headers and meaningful text are never removed
+
+## 🎛️ Cleaning Modes
+
+### Conservative Mode (Default)
+Safe defaults recommended for most users:
+- ✅ Removes noise (headers, footers, page numbers, duplicates)
+- ✅ Dehyphenates broken words
+- ✅ Removes repeating headers/footers across pages
+- ✅ Preserves lists and tables
+- ✅ Never merges lines or normalizes whitespace
+
+### Aggressive Mode
+For more aggressive cleaning:
+- ✅ All Conservative features enabled
+- ✅ Merges broken lines (with list/table protection)
+- ✅ Normalizes whitespace (with table protection)
+- ⚠️ Use with caution: may affect formatting in some documents
 
 ---
 
@@ -133,12 +191,38 @@ Options:
   --undo         Restore files from last operation
 ```
 
+**Note:** CLI version uses Conservative mode by default. Advanced features (merge lines, whitespace normalization) are available programmatically but disabled by default for safety.
+
 ---
 
 ## 🔧 Requirements
 
 - **Python 3.9+**
 - **PDF support** (optional): `pdftotext` from poppler-utils
+
+## 🧪 Testing
+
+See [SELF_TESTS.md](SELF_TESTS.md) for manual test steps and expected results.
+
+Test fixtures are available in the `examples/` directory:
+- `fixture1_headers_footers.txt` - Headers/footers + page numbers
+- `fixture2_hyphenation.txt` - Hyphenation + mid-sentence wraps
+- `fixture3_lists_tables.txt` - Lists & pseudo-tables
+
+## 🔍 Technical Details
+
+### Confidence Thresholds
+- **Repeating Headers/Footers**: Requires ≥70% frequency across pages and ≥8 characters (to avoid removing short content headers)
+
+### Protection Mechanisms
+- **List Detection**: Recognizes bullet lists (`-`, `•`, `*`, `·`) and numbered lists (`1.`, `1)`)
+- **Table Detection**: Detects ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions
+- **Dehyphenation Safety**: Only merges when hyphen is followed by lowercase continuation (avoids false positives)
+
+### Performance
+- **Conservative Mode**: Single pass, instant for files < 1MB
+- **Aggressive Mode**: May require chunking for files > 1MB
+- **Web Version**: Virtualization for files > 1MB ensures smooth UI
 
 ---
 

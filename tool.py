@@ -50,6 +50,9 @@ class DocStripper:
             'empty_lines_removed': 0,
             'header_footer_removed': 0,
             'punctuation_lines_removed': 0,
+            'dehyphenated_tokens': 0,
+            'repeating_headers_footers_removed': 0,
+            'merged_lines': 0,
         }
         self.undo_data = []
     
@@ -141,6 +144,11 @@ class DocStripper:
         stripped = line.strip()
         if not stripped:
             return False
+        
+        # Single bullet artifacts: •, *, ·, etc.
+        if re.match(r'^\s*[\u2022•·*]\s*$', stripped):
+            return True
+        
         # Lines with only punctuation: ---, ***, ===, etc.
         # Match non-word, non-space characters, max 50 chars
         return bool(re.match(r'^[^\w\s]+$', stripped)) and len(stripped) <= 50
@@ -153,10 +161,316 @@ class DocStripper:
                 return True
         return False
     
-    def clean_text(self, text: str) -> Tuple[str, dict]:
+    def dehyphenate_text(self, text: str) -> Tuple[str, int]:
+        """Remove hyphenation across line breaks. Only applies to lowercase continuation."""
+        if not text:
+            return text, 0
+        
+        # Count matches before replacement
+        matches = re.findall(r'-\n([a-z]{1,})', text)
+        tokens_fixed = len(matches)
+        
+        # Replace "-\n[a-z]" with just the lowercase part (safe dehyphenation)
+        dehyphenated = re.sub(r'-\n([a-z]{1,})', r'\1', text)
+        
+        return dehyphenated, tokens_fixed
+    
+    def detect_pages(self, text: str) -> List[int]:
+        """Detect page boundaries. Returns list of line indices where pages start."""
+        lines = text.split('\n')
+        
+        # First try: split by form-feed
+        if '\f' in text:
+            boundaries = []
+            
+            # Check for form-feeds within lines
+            for i, line in enumerate(lines):
+                if '\f' in line:
+                    # This line contains a form-feed, so it's a boundary
+                    boundaries.append(i)
+            
+            # Also check for standalone form-feeds between pages
+            if not boundaries:
+                pages = text.split('\f')
+                if len(pages) > 1:
+                    line_index = 0
+                    for i in range(1, len(pages)):
+                        prev_page_lines = pages[i - 1].split('\n')
+                        line_index += len(prev_page_lines)
+                        boundaries.append(line_index)
+            
+            return boundaries
+        
+        # Second try: detect "Page X of Y" patterns as page boundaries
+        page_markers = []
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            # Match "Page X of Y" or "Page X" patterns
+            if re.match(r'^Page\s+\d+(\s+of\s+\d+)?$', stripped, re.IGNORECASE):
+                page_markers.append(i)
+        
+        if len(page_markers) > 1:
+            # Return line indices after each page marker (except the last one)
+            return page_markers[1:]  # Skip first marker as it's the start
+        
+        # Fallback: split by 3+ consecutive newlines (pseudo-page boundaries)
+        boundaries = []
+        consecutive_empty = 0
+        
+        for i, line in enumerate(lines):
+            if not line.strip():
+                consecutive_empty += 1
+            else:
+                if consecutive_empty >= 3:
+                    boundaries.append(i)
+                consecutive_empty = 0
+        
+        return boundaries
+    
+    def detect_repeating_headers_footers(self, text: str, pages: List[int]) -> set:
+        """Detect headers/footers that repeat across pages."""
+        lines = text.split('\n')
+        first_lines = []
+        last_lines = []
+        
+        # Extract first/last non-empty line from each page (skipping known header/footer patterns)
+        start_idx = 0
+        total_pages = len(pages) + 1  # pages.length boundaries = pages.length + 1 pages
+        
+        # Need at least 2 pages to detect repeating headers/footers
+        if total_pages < 2:
+            return set()
+        
+        for i in range(len(pages) + 1):
+            end_idx = pages[i] if i < len(pages) else len(lines)
+            
+            # Find first non-empty line in this page (skip known header/footer patterns)
+            for j in range(start_idx, end_idx):
+                stripped = lines[j].strip()
+                if stripped and not self.is_header_footer(stripped) and not self.is_page_number(stripped):
+                    first_lines.append(stripped)
+                    break
+            
+            # Find last non-empty line in this page (skip known header/footer patterns)
+            for j in range(end_idx - 1, start_idx - 1, -1):
+                stripped = lines[j].strip()
+                if stripped and not self.is_header_footer(stripped) and not self.is_page_number(stripped):
+                    last_lines.append(stripped)
+                    break
+            
+            start_idx = end_idx
+        
+        # Count frequency of each line
+        from collections import Counter
+        first_line_counts = Counter(first_lines)
+        last_line_counts = Counter(last_lines)
+        
+        # Find lines that appear in >= 70% of pages
+        threshold = max(1, int(total_pages * 0.7))
+        to_remove = set()
+        
+        for line, count in first_line_counts.items():
+            # Only remove if it appears frequently AND is not too short (likely content)
+            # Minimum length check: exclude very short lines that might be content
+            # Use length >= 8 to avoid removing common short words like "Content", "Summary", etc.
+            if count >= threshold and len(line) >= 8:
+                to_remove.add(line)
+        
+        for line, count in last_line_counts.items():
+            # Only remove if it appears frequently AND is not too short (likely content)
+            if count >= threshold and len(line) >= 8:
+                to_remove.add(line)
+        
+        return to_remove
+    
+    def is_list_marker(self, line: str) -> bool:
+        """Check if line starts with a list marker."""
+        stripped = line.strip()
+        # Bullet lists: - , • , * , · 
+        if re.match(r'^\s*([-•*·])\s+', stripped):
+            return True
+        # Ordered lists: 1. , 1) , etc.
+        if re.match(r'^\s*\d+[.)]\s+', stripped):
+            return True
+        return False
+    
+    def detect_table_block(self, lines: List[str], start_idx: int) -> Tuple[bool, int]:
+        """Detect table-like blocks: ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions."""
+        if start_idx >= len(lines) - 2:
+            return False, start_idx
+        
+        check_lines = lines[start_idx:min(start_idx + 10, len(lines))]
+        consecutive_table_lines = 0
+        space_patterns = []
+        
+        for line in check_lines:
+            if not line.strip():
+                break  # Empty line breaks table pattern
+            
+            # Find positions of multiple spaces (≥2 spaces)
+            matches = []
+            for match in re.finditer(r' {2,}', line):
+                matches.append(match.start())
+            
+            if len(matches) >= 2:
+                space_patterns.append(matches)
+                consecutive_table_lines += 1
+            else:
+                break
+        
+        if consecutive_table_lines >= 3:
+            # Check if space positions are similar across lines
+            similar_positions = 0
+            if len(space_patterns) >= 3:
+                first_pattern = space_patterns[0]
+                for i in range(1, len(space_patterns)):
+                    pattern = space_patterns[i]
+                    # Check if at least 2 positions match (within ±2 chars)
+                    matches = 0
+                    for pos in first_pattern:
+                        for pos2 in pattern:
+                            if abs(pos - pos2) <= 2:
+                                matches += 1
+                                break
+                    if matches >= 2:
+                        similar_positions += 1
+            
+            if similar_positions >= 2:
+                return True, start_idx + consecutive_table_lines
+        
+        return False, start_idx
+    
+    def merge_broken_lines(self, text: str, enabled: bool = False) -> Tuple[str, int]:
+        """Merge broken lines mid-sentence, protecting lists."""
+        if not enabled or not text:
+            return text, 0
+        
+        lines = text.split('\n')
+        merged_lines = []
+        lines_merged = 0
+        table_block_end = -1
+        
+        for i in range(len(lines)):
+            # Check if we're in a table block
+            if i >= table_block_end:
+                is_table, end_idx = self.detect_table_block(lines, i)
+                if is_table:
+                    table_block_end = end_idx
+            
+            # Skip merge if in table block
+            if i < table_block_end:
+                merged_lines.append(lines[i])
+                continue
+            
+            # Check if we should merge with previous line
+            if merged_lines:
+                prev_line = merged_lines[-1]
+                current_line = lines[i]
+                
+                # Don't merge if previous or current line is empty
+                if not prev_line.strip() or not current_line.strip():
+                    merged_lines.append(current_line)
+                    continue
+                
+                # Merge conditions:
+                # 1. Previous line doesn't end with [.!?]
+                # 2. Current line doesn't start with list marker
+                # 3. Next line (if exists) doesn't start with list marker
+                
+                prev_ends_with_punct = bool(re.search(r'[.!?]\s*$', prev_line))
+                next_is_list = (i < len(lines) - 1 and 
+                               lines[i + 1].strip() and 
+                               self.is_list_marker(lines[i + 1]))
+                current_is_list = current_line.strip() and self.is_list_marker(current_line)
+                
+                if not prev_ends_with_punct and not current_is_list and not next_is_list:
+                    # Merge: remove newline, add space
+                    merged_lines[-1] = prev_line.rstrip() + ' ' + current_line.lstrip()
+                    lines_merged += 1
+                    continue
+            
+            merged_lines.append(lines[i])
+        
+        return '\n'.join(merged_lines), lines_merged
+    
+    def normalize_whitespace(self, text: str, enabled: bool = False, skip_table_blocks: bool = True) -> Tuple[str, bool]:
+        """Normalize whitespace, protecting table blocks if enabled."""
+        if not enabled or not text:
+            return text, False
+        
+        lines = text.split('\n')
+        normalized_lines = []
+        table_block_end = -1
+        
+        for i in range(len(lines)):
+            line = lines[i]
+            
+            # Check if we're in a table block
+            if skip_table_blocks and i >= table_block_end:
+                is_table, end_idx = self.detect_table_block(lines, i)
+                if is_table:
+                    table_block_end = end_idx
+            
+            # Skip normalization if in table block
+            if skip_table_blocks and i < table_block_end:
+                normalized_lines.append(line)
+                continue
+            
+            # Normalize whitespace
+            # Collapse multiple spaces to single space
+            line = re.sub(r'\s+', ' ', line)
+            # Normalize tabs to spaces
+            line = line.replace('\t', ' ')
+            # Trim trailing spaces
+            line = re.sub(r'\s+$', '', line)
+            
+            normalized_lines.append(line)
+        
+        return '\n'.join(normalized_lines), True
+    
+    def normalize_unicode_punctuation(self, text: str, enabled: bool = False) -> Tuple[str, bool]:
+        """Normalize Unicode punctuation to ASCII (limited, only punctuation)."""
+        if not enabled or not text:
+            return text, False
+        
+        # Limited Unicode normalization: only common punctuation
+        unicode_map = {
+            '\u201C': '"',  # Left double quotation mark
+            '\u201D': '"',   # Right double quotation mark
+            '\u2018': "'",   # Left single quotation mark
+            '\u2019': "'",   # Right single quotation mark
+            '\u2013': '-',   # En dash
+            '\u2014': '-',   # Em dash
+            '\u2026': '...', # Horizontal ellipsis
+        }
+        
+        normalized = text
+        replacements = 0
+        
+        for unicode_char, ascii_char in unicode_map.items():
+            count = normalized.count(unicode_char)
+            if count > 0:
+                replacements += count
+                normalized = normalized.replace(unicode_char, ascii_char)
+        
+        return normalized, replacements > 0
+
+    def clean_text(self, text: str, merge_lines: bool = False, normalize_ws: bool = False, normalize_unicode: bool = False) -> Tuple[str, dict]:
         """Clean text by removing noise."""
         if not text:
             return "", {}
+        
+        # Apply dehyphenation first (before line-by-line processing)
+        text, dehyphenated_tokens = self.dehyphenate_text(text)
+        
+        # Apply merge broken lines (before whitespace normalization)
+        text, merged_lines_count = self.merge_broken_lines(text, enabled=merge_lines)
+        
+        # Apply whitespace normalization (with table protection)
+        text, normalized_ws = self.normalize_whitespace(text, enabled=normalize_ws, skip_table_blocks=True)
+        
+        # Apply Unicode punctuation normalization (limited, only punctuation)
+        text, normalized_unicode = self.normalize_unicode_punctuation(text, enabled=normalize_unicode)
         
         lines = text.split('\n')
         cleaned_lines = []
@@ -167,7 +481,14 @@ class DocStripper:
             'empty_lines_removed': 0,
             'header_footer_removed': 0,
             'punctuation_lines_removed': 0,
+            'dehyphenated_tokens': dehyphenated_tokens,
+            'repeating_headers_footers_removed': 0,
+            'merged_lines': merged_lines_count,
         }
+        
+        # Detect repeating headers/footers across pages
+        page_boundaries = self.detect_pages(text)
+        repeating_headers_footers = self.detect_repeating_headers_footers(text, page_boundaries)
         
         for line in lines:
             original_line = line
@@ -191,6 +512,11 @@ class DocStripper:
             # Skip headers/footers
             if self.is_header_footer(stripped):
                 local_stats['header_footer_removed'] += 1
+                continue
+            
+            # Skip repeating headers/footers across pages
+            if stripped in repeating_headers_footers:
+                local_stats['repeating_headers_footers_removed'] += 1
                 continue
             
             # Skip consecutive duplicates
@@ -229,6 +555,9 @@ class DocStripper:
         self.stats['empty_lines_removed'] += stats['empty_lines_removed']
         self.stats['header_footer_removed'] += stats['header_footer_removed']
         self.stats['punctuation_lines_removed'] += stats.get('punctuation_lines_removed', 0)
+        self.stats['dehyphenated_tokens'] += stats.get('dehyphenated_tokens', 0)
+        self.stats['repeating_headers_footers_removed'] += stats.get('repeating_headers_footers_removed', 0)
+        self.stats['merged_lines'] += stats.get('merged_lines', 0)
         
         # Show what would be changed
         if text != cleaned_text:
@@ -238,6 +567,10 @@ class DocStripper:
             print(f"  - Headers/footers removed: {stats['header_footer_removed']}")
             if stats.get('punctuation_lines_removed', 0) > 0:
                 print(f"  - Punctuation lines removed: {stats['punctuation_lines_removed']}")
+            if stats.get('dehyphenated_tokens', 0) > 0:
+                print(f"  - Dehyphenated tokens: {stats['dehyphenated_tokens']}")
+            if stats.get('repeating_headers_footers_removed', 0) > 0:
+                print(f"  - Repeating headers/footers removed: {stats['repeating_headers_footers_removed']}")
         
         # Save original for undo
         if not self.dry_run:
@@ -302,6 +635,10 @@ class DocStripper:
         print(f"Headers/footers removed: {self.stats['header_footer_removed']}")
         if self.stats.get('punctuation_lines_removed', 0) > 0:
             print(f"Punctuation lines removed: {self.stats['punctuation_lines_removed']}")
+        if self.stats.get('dehyphenated_tokens', 0) > 0:
+            print(f"Dehyphenated tokens: {self.stats['dehyphenated_tokens']}")
+        if self.stats.get('repeating_headers_footers_removed', 0) > 0:
+            print(f"Repeating headers/footers removed: {self.stats['repeating_headers_footers_removed']}")
         if not self.dry_run:
             print(f"\nLog saved to: {self.log_file}")
             print("Backup files created with .bak extension")

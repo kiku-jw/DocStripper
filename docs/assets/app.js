@@ -10,6 +10,12 @@ class DocStripper {
             removeDuplicates: options.removeDuplicates !== false,
             removePunctuationLines: options.removePunctuationLines !== false,
             preserveParagraphSpacing: options.preserveParagraphSpacing !== false,
+            dehyphenate: options.dehyphenate !== false, // Default ON in Conservative mode
+            removeRepeatingHeadersFooters: options.removeRepeatingHeadersFooters !== false, // Default ON in Conservative mode
+            mergeBrokenLines: options.mergeBrokenLines !== undefined ? options.mergeBrokenLines : false, // Default OFF in Conservative
+            normalizeWhitespace: options.normalizeWhitespace !== undefined ? options.normalizeWhitespace : false, // Default OFF in Conservative
+            keepTableSpacing: options.keepTableSpacing !== false, // Default ON
+            normalizeUnicode: options.normalizeUnicode !== undefined ? options.normalizeUnicode : false, // Default OFF
         };
         
         // Enhanced header/footer patterns
@@ -68,6 +74,9 @@ class DocStripper {
         const stripped = line.trim();
         if (!stripped) return false;
         
+        // Single bullet artifacts: •, *, ·, etc.
+        if (/^\s*[\u2022•·*]\s*$/.test(stripped)) return true;
+        
         // Lines with only punctuation characters: ---, ***, ===, etc.
         return /^[^\w\s]+$/.test(stripped) && stripped.length <= 50;
     }
@@ -76,9 +85,395 @@ class DocStripper {
         const stripped = line.trim();
         return this.headerPatterns.some(pattern => pattern.test(stripped));
     }
+    
+    dehyphenateText(text) {
+        if (!text || !this.options.dehyphenate) {
+            return { text: text || '', tokensFixed: 0 };
+        }
+        
+        // Count matches before replacement
+        const matches = text.match(/-\n([a-z]{1,})/g);
+        const tokensFixed = matches ? matches.length : 0;
+        
+        // Replace "-\n[a-z]" with just the lowercase part (safe dehyphenation)
+        const dehyphenated = text.replace(/-\n([a-z]{1,})/g, '$1');
+        
+        return { text: dehyphenated, tokensFixed };
+    }
+    
+    detectPages(text) {
+        const lines = text.split('\n');
+        
+        // First try: split by form-feed
+        if (text.includes('\f')) {
+            const boundaries = [];
+            let lineIndex = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('\f')) {
+                    // Split this line by form-feed and count
+                    const parts = lines[i].split('\f');
+                    if (parts.length > 1) {
+                        // Each part after the first creates a new page boundary
+                        for (let j = 1; j < parts.length; j++) {
+                            boundaries.push(i);
+                        }
+                    }
+                }
+            }
+            
+            // Also check for standalone form-feeds
+            if (boundaries.length === 0) {
+                const pages = text.split('\f');
+                if (pages.length > 1) {
+                    let lineIndex = 0;
+                    for (let i = 1; i < pages.length; i++) {
+                        const prevPageLines = pages[i - 1].split('\n');
+                        lineIndex += prevPageLines.length;
+                        boundaries.push(lineIndex);
+                    }
+                }
+            }
+            
+            return boundaries;
+        }
+        
+        // Second try: detect "Page X of Y" patterns as page boundaries
+        const pageMarkers = [];
+        for (let i = 0; i < lines.length; i++) {
+            const stripped = lines[i].trim();
+            // Match "Page X of Y" or "Page X" patterns
+            if (/^Page\s+\d+(\s+of\s+\d+)?$/i.test(stripped)) {
+                pageMarkers.push(i);
+            }
+        }
+        
+        if (pageMarkers.length > 1) {
+            // Return line indices after each page marker (except the first one)
+            return pageMarkers.slice(1); // Skip first marker as it's the start
+        }
+        
+        // Fallback: split by 3+ consecutive newlines (pseudo-page boundaries)
+        const boundaries = [];
+        let consecutiveEmpty = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            if (!lines[i].trim()) {
+                consecutiveEmpty++;
+            } else {
+                if (consecutiveEmpty >= 3) {
+                    boundaries.push(i);
+                }
+                consecutiveEmpty = 0;
+            }
+        }
+        
+        return boundaries;
+    }
+    
+    detectRepeatingHeadersFooters(text, pages) {
+        if (!this.options.removeRepeatingHeadersFooters) {
+            return new Set();
+        }
+        
+        const lines = text.split('\n');
+        const firstLines = [];
+        const lastLines = [];
+        
+        // Extract first/last non-empty line from each page
+        let startIdx = 0;
+        const totalPages = pages.length + 1; // pages.length boundaries = pages.length + 1 pages
+        
+        // Need at least 2 pages to detect repeating headers/footers
+        if (totalPages < 2) {
+            return new Set();
+        }
+        
+        for (let i = 0; i <= pages.length; i++) {
+            const endIdx = i < pages.length ? pages[i] : lines.length;
+            
+            // Find first non-empty line in this page (skip known header/footer patterns)
+            for (let j = startIdx; j < endIdx; j++) {
+                const stripped = lines[j].trim();
+                if (stripped && !this.isHeaderFooter(stripped) && !this.isPageNumber(stripped)) {
+                    firstLines.push(stripped);
+                    break;
+                }
+            }
+            
+            // Find last non-empty line in this page (skip known header/footer patterns)
+            for (let j = endIdx - 1; j >= startIdx; j--) {
+                const stripped = lines[j].trim();
+                if (stripped && !this.isHeaderFooter(stripped) && !this.isPageNumber(stripped)) {
+                    lastLines.push(stripped);
+                    break;
+                }
+            }
+            
+            startIdx = endIdx;
+        }
+        
+        // Count frequency of each line
+        const firstLineCounts = new Map();
+        const lastLineCounts = new Map();
+        
+        firstLines.forEach(line => {
+            firstLineCounts.set(line, (firstLineCounts.get(line) || 0) + 1);
+        });
+        
+        lastLines.forEach(line => {
+            lastLineCounts.set(line, (lastLineCounts.get(line) || 0) + 1);
+        });
+        
+        // Find lines that appear in >= 70% of pages
+        const threshold = Math.max(1, Math.ceil(totalPages * 0.7));
+        const toRemove = new Set();
+        
+        firstLineCounts.forEach((count, line) => {
+            // Only remove if it appears frequently AND is not too short (likely content)
+            // Minimum length check: exclude very short lines that might be content
+            // Use length >= 8 to avoid removing common short words like "Content", "Summary", etc.
+            if (count >= threshold && line.length >= 8) {
+                toRemove.add(line);
+            }
+        });
+        
+        lastLineCounts.forEach((count, line) => {
+            // Only remove if it appears frequently AND is not too short (likely content)
+            if (count >= threshold && line.length >= 8) {
+                toRemove.add(line);
+            }
+        });
+        
+        return toRemove;
+    }
+    
+    isListMarker(line) {
+        const stripped = line.trim();
+        // Bullet lists: - , • , * , · 
+        if (/^\s*([-•*·])\s+/.test(stripped)) return true;
+        // Ordered lists: 1. , 1) , etc.
+        if (/^\s*\d+[.)]\s+/.test(stripped)) return true;
+        return false;
+    }
+    
+    detectTableBlock(lines, startIdx) {
+        // Detect table-like blocks: ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions
+        if (startIdx >= lines.length - 2) return { isTable: false, endIdx: startIdx };
+        
+        const checkLines = lines.slice(startIdx, Math.min(startIdx + 10, lines.length)); // Check up to 10 lines
+        let consecutiveTableLines = 0;
+        const spacePatterns = [];
+        
+        for (let i = 0; i < checkLines.length; i++) {
+            const line = checkLines[i];
+            if (!line.trim()) break; // Empty line breaks table pattern
+            
+            // Find positions of multiple spaces (≥2 spaces)
+            const matches = [];
+            let match;
+            const regex = / {2,}/g;
+            while ((match = regex.exec(line)) !== null) {
+                matches.push(match.index);
+            }
+            
+            if (matches.length >= 2) {
+                spacePatterns.push(matches);
+                consecutiveTableLines++;
+            } else {
+                break;
+            }
+        }
+        
+        if (consecutiveTableLines >= 3) {
+            // Check if space positions are similar across lines
+            let similarPositions = 0;
+            if (spacePatterns.length >= 3) {
+                const firstPattern = spacePatterns[0];
+                for (let i = 1; i < spacePatterns.length; i++) {
+                    const pattern = spacePatterns[i];
+                    // Check if at least 2 positions match (within ±2 chars)
+                    let matches = 0;
+                    for (const pos of firstPattern) {
+                        for (const pos2 of pattern) {
+                            if (Math.abs(pos - pos2) <= 2) {
+                                matches++;
+                                break;
+                            }
+                        }
+                    }
+                    if (matches >= 2) similarPositions++;
+                }
+            }
+            
+            if (similarPositions >= 2) {
+                return { isTable: true, endIdx: startIdx + consecutiveTableLines };
+            }
+        }
+        
+        return { isTable: false, endIdx: startIdx };
+    }
+    
+    mergeBrokenLines(text) {
+        if (!this.options.mergeBrokenLines) {
+            return { text, linesMerged: 0 };
+        }
+        
+        const lines = text.split('\n');
+        const mergedLines = [];
+        let linesMerged = 0;
+        let tableBlockEnd = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            // Check if we're in a table block
+            if (i >= tableBlockEnd) {
+                const tableCheck = this.detectTableBlock(lines, i);
+                if (tableCheck.isTable) {
+                    tableBlockEnd = tableCheck.endIdx;
+                }
+            }
+            
+            // Skip merge if in table block
+            if (i < tableBlockEnd) {
+                mergedLines.push(lines[i]);
+                continue;
+            }
+            
+            // Check if we should merge with previous line
+            if (mergedLines.length > 0) {
+                const prevLine = mergedLines[mergedLines.length - 1];
+                const currentLine = lines[i];
+                
+                // Don't merge if previous line is empty
+                if (!prevLine.trim()) {
+                    mergedLines.push(currentLine);
+                    continue;
+                }
+                
+                // Don't merge if current line is empty
+                if (!currentLine.trim()) {
+                    mergedLines.push(currentLine);
+                    continue;
+                }
+                
+                // Merge conditions:
+                // 1. Previous line doesn't end with [.!?]
+                // 2. Current line doesn't start with list marker
+                // 3. Next line (if exists) doesn't start with list marker (protect list context)
+                
+                const prevEndsWithPunct = /[.!?]\s*$/.test(prevLine);
+                const nextIsList = i < lines.length - 1 && lines[i + 1].trim() && this.isListMarker(lines[i + 1]);
+                const currentIsList = currentLine.trim() && this.isListMarker(currentLine);
+                
+                if (!prevEndsWithPunct && 
+                    !currentIsList && 
+                    !nextIsList) {
+                    // Merge: remove newline, add space
+                    mergedLines[mergedLines.length - 1] = prevLine.trimEnd() + ' ' + currentLine.trimStart();
+                    linesMerged++;
+                    continue;
+                }
+            }
+            
+            mergedLines.push(lines[i]);
+        }
+        
+        return { text: mergedLines.join('\n'), linesMerged };
+    }
+    
+    normalizeWhitespace(text, skipTableBlocks) {
+        if (!this.options.normalizeWhitespace) {
+            return { text, normalized: false };
+        }
+        
+        const lines = text.split('\n');
+        const normalizedLines = [];
+        let tableBlockEnd = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            
+            // Check if we're in a table block
+            if (skipTableBlocks && i >= tableBlockEnd) {
+                const tableCheck = this.detectTableBlock(lines, i);
+                if (tableCheck.isTable) {
+                    tableBlockEnd = tableCheck.endIdx;
+                }
+            }
+            
+            // Skip normalization if in table block
+            if (skipTableBlocks && i < tableBlockEnd) {
+                normalizedLines.push(line);
+                continue;
+            }
+            
+            // Normalize whitespace
+            // Collapse multiple spaces to single space
+            line = line.replace(/\s+/g, ' ');
+            // Normalize tabs to spaces
+            line = line.replace(/\t/g, ' ');
+            // Trim trailing spaces
+            line = line.replace(/\s+$/, '');
+            
+            normalizedLines.push(line);
+        }
+        
+        return { text: normalizedLines.join('\n'), normalized: true };
+    }
+    
+    normalizeUnicodePunctuation(text) {
+        if (!this.options.normalizeUnicode) {
+            return { text, normalized: false };
+        }
+        
+        // Limited Unicode normalization: only common punctuation
+        // Map curly quotes to straight quotes, en/em dashes to hyphen
+        const unicodeMap = {
+            // Curly quotes
+            '\u201C': '"', // Left double quotation mark
+            '\u201D': '"', // Right double quotation mark
+            '\u2018': "'", // Left single quotation mark
+            '\u2019': "'", // Right single quotation mark
+            // Dashes
+            '\u2013': '-', // En dash
+            '\u2014': '-', // Em dash
+            // Other common punctuation
+            '\u2026': '...', // Horizontal ellipsis
+        };
+        
+        let normalized = text;
+        let replacements = 0;
+        
+        for (const [unicode, ascii] of Object.entries(unicodeMap)) {
+            const regex = new RegExp(unicode, 'g');
+            const matches = normalized.match(regex);
+            if (matches) {
+                replacements += matches.length;
+            }
+            normalized = normalized.replace(regex, ascii);
+        }
+        
+        return { text: normalized, normalized: replacements > 0, replacements };
+    }
 
     cleanText(text) {
         if (!text) return { text: '', stats: this.getEmptyStats() };
+        
+        // Apply dehyphenation first (before line-by-line processing)
+        const dehyphenResult = this.dehyphenateText(text);
+        text = dehyphenResult.text;
+        
+        // Apply merge broken lines (before whitespace normalization)
+        const mergeResult = this.mergeBrokenLines(text);
+        text = mergeResult.text;
+        
+        // Apply whitespace normalization (with table protection if enabled)
+        const whitespaceResult = this.normalizeWhitespace(text, this.options.keepTableSpacing);
+        text = whitespaceResult.text;
+        
+        // Apply Unicode punctuation normalization (limited, only punctuation)
+        const unicodeResult = this.normalizeUnicodePunctuation(text);
+        text = unicodeResult.text;
 
         const lines = text.split('\n');
         const cleanedLines = [];
@@ -90,7 +485,14 @@ class DocStripper {
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
             punctuationLinesRemoved: 0,
+            dehyphenatedTokens: dehyphenResult.tokensFixed,
+            repeatingHeadersFootersRemoved: 0,
+            mergedLines: mergeResult.linesMerged,
         };
+        
+        // Detect repeating headers/footers across pages
+        const pageBoundaries = this.detectPages(text);
+        const repeatingHeadersFooters = this.detectRepeatingHeadersFooters(text, pageBoundaries);
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -138,6 +540,12 @@ class DocStripper {
             // Skip headers/footers (if enabled)
             if (this.options.removeHeadersFooters && this.isHeaderFooter(stripped)) {
                 stats.headerFooterRemoved++;
+                continue;
+            }
+            
+            // Skip repeating headers/footers across pages (if enabled)
+            if (repeatingHeadersFooters.has(stripped)) {
+                stats.repeatingHeadersFootersRemoved++;
                 continue;
             }
 
@@ -238,6 +646,9 @@ class DocStripper {
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
             punctuationLinesRemoved: 0,
+            dehyphenatedTokens: 0,
+            repeatingHeadersFootersRemoved: 0,
+            mergedLines: 0,
         };
     }
 }
@@ -731,6 +1142,9 @@ Respond with JSON only:`;
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
             punctuationLinesRemoved: 0,
+            dehyphenatedTokens: 0,
+            repeatingHeadersFootersRemoved: 0,
+            mergedLines: 0,
         };
     }
 }
@@ -749,7 +1163,9 @@ class App {
         this.files = [];
         this.results = [];
         this.cleaningMode = 'fast'; // 'fast' or 'smart'
+        this.cleaningModeType = 'conservative'; // 'conservative' or 'aggressive'
         this.initializeElements();
+        this.loadSettings(); // Load saved settings from localStorage
         this.setupEventListeners();
     }
 
@@ -773,13 +1189,22 @@ class App {
         this.cancelBtn = document.getElementById('cancelBtn');
         this.modeNote = document.getElementById('modeNote');
         
+        // Cleaning mode type (Conservative/Aggressive)
+        this.conservativeMode = document.getElementById('conservativeMode');
+        this.aggressiveMode = document.getElementById('aggressiveMode');
+        
         // Settings checkboxes
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
         this.removePageNumbers = document.getElementById('removePageNumbers');
         this.removeHeadersFooters = document.getElementById('removeHeadersFooters');
+        this.removeRepeatingHeadersFooters = document.getElementById('removeRepeatingHeadersFooters');
         this.removeDuplicates = document.getElementById('removeDuplicates');
         this.removePunctuationLines = document.getElementById('removePunctuationLines');
+        this.dehyphenate = document.getElementById('dehyphenate');
         this.preserveParagraphSpacing = document.getElementById('preserveParagraphSpacing');
+        this.mergeBrokenLines = document.getElementById('mergeBrokenLines');
+        this.normalizeWhitespace = document.getElementById('normalizeWhitespace');
+        this.keepTableSpacing = document.getElementById('keepTableSpacing');
         
         // Check if elements exist
         if (!this.uploadArea || !this.fileInput) {
@@ -812,6 +1237,136 @@ class App {
         const clearBtn = document.getElementById('clearBtn');
         if (clearBtn) {
             clearBtn.remove();
+        }
+    }
+    
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('docstripper_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                
+                // Restore cleaning mode type
+                if (settings.cleaningModeType) {
+                    this.cleaningModeType = settings.cleaningModeType;
+                    if (this.conservativeMode && this.aggressiveMode) {
+                        if (settings.cleaningModeType === 'aggressive') {
+                            this.aggressiveMode.checked = true;
+                        } else {
+                            this.conservativeMode.checked = true;
+                        }
+                    }
+                }
+                
+                // Restore cleaning mode (fast/smart)
+                if (settings.cleaningMode) {
+                    this.cleaningMode = settings.cleaningMode;
+                    if (this.fastMode && this.smartMode) {
+                        if (settings.cleaningMode === 'smart') {
+                            this.smartMode.checked = true;
+                        } else {
+                            this.fastMode.checked = true;
+                        }
+                    }
+                }
+                
+                // Restore checkbox states
+                if (settings.removeEmptyLines !== undefined && this.removeEmptyLines) {
+                    this.removeEmptyLines.checked = settings.removeEmptyLines;
+                }
+                if (settings.removePageNumbers !== undefined && this.removePageNumbers) {
+                    this.removePageNumbers.checked = settings.removePageNumbers;
+                }
+                if (settings.removeHeadersFooters !== undefined && this.removeHeadersFooters) {
+                    this.removeHeadersFooters.checked = settings.removeHeadersFooters;
+                }
+                if (settings.removeRepeatingHeadersFooters !== undefined && this.removeRepeatingHeadersFooters) {
+                    this.removeRepeatingHeadersFooters.checked = settings.removeRepeatingHeadersFooters;
+                }
+                if (settings.removeDuplicates !== undefined && this.removeDuplicates) {
+                    this.removeDuplicates.checked = settings.removeDuplicates;
+                }
+                if (settings.removePunctuationLines !== undefined && this.removePunctuationLines) {
+                    this.removePunctuationLines.checked = settings.removePunctuationLines;
+                }
+                if (settings.preserveParagraphSpacing !== undefined && this.preserveParagraphSpacing) {
+                    this.preserveParagraphSpacing.checked = settings.preserveParagraphSpacing;
+                }
+                if (settings.dehyphenate !== undefined && this.dehyphenate) {
+                    this.dehyphenate.checked = settings.dehyphenate;
+                }
+                if (settings.mergeBrokenLines !== undefined && this.mergeBrokenLines) {
+                    this.mergeBrokenLines.checked = settings.mergeBrokenLines;
+                }
+                if (settings.normalizeWhitespace !== undefined && this.normalizeWhitespace) {
+                    this.normalizeWhitespace.checked = settings.normalizeWhitespace;
+                }
+                if (settings.keepTableSpacing !== undefined && this.keepTableSpacing) {
+                    this.keepTableSpacing.checked = settings.keepTableSpacing;
+                }
+                
+                // Update mode UI
+                this.updateModeUI();
+            } else {
+                // Apply default Conservative mode settings
+                this.applyModeDefaults();
+            }
+        } catch (e) {
+            console.error('Failed to load settings:', e);
+            this.applyModeDefaults();
+        }
+    }
+    
+    saveSettings() {
+        try {
+            const settings = {
+                cleaningModeType: this.cleaningModeType,
+                cleaningMode: this.cleaningMode,
+                removeEmptyLines: this.removeEmptyLines?.checked ?? true,
+                removePageNumbers: this.removePageNumbers?.checked ?? true,
+                removeHeadersFooters: this.removeHeadersFooters?.checked ?? true,
+                removeRepeatingHeadersFooters: this.removeRepeatingHeadersFooters?.checked ?? true,
+                removeDuplicates: this.removeDuplicates?.checked ?? true,
+                removePunctuationLines: this.removePunctuationLines?.checked ?? true,
+                preserveParagraphSpacing: this.preserveParagraphSpacing?.checked ?? true,
+                dehyphenate: this.dehyphenate?.checked ?? true,
+                mergeBrokenLines: this.mergeBrokenLines?.checked ?? false,
+                normalizeWhitespace: this.normalizeWhitespace?.checked ?? false,
+                keepTableSpacing: this.keepTableSpacing?.checked ?? true,
+            };
+            localStorage.setItem('docstripper_settings', JSON.stringify(settings));
+        } catch (e) {
+            console.error('Failed to save settings:', e);
+        }
+    }
+    
+    applyModeDefaults() {
+        if (this.cleaningModeType === 'aggressive') {
+            // Aggressive mode defaults
+            if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
+            if (this.removePageNumbers) this.removePageNumbers.checked = true;
+            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+            if (this.removeRepeatingHeadersFooters) this.removeRepeatingHeadersFooters.checked = true;
+            if (this.removeDuplicates) this.removeDuplicates.checked = true;
+            if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
+            if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
+            if (this.dehyphenate) this.dehyphenate.checked = true;
+            if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true; // ON in Aggressive
+            if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true; // ON in Aggressive
+            if (this.keepTableSpacing) this.keepTableSpacing.checked = true;
+        } else {
+            // Conservative mode defaults (current behavior)
+            if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
+            if (this.removePageNumbers) this.removePageNumbers.checked = true;
+            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+            if (this.removeRepeatingHeadersFooters) this.removeRepeatingHeadersFooters.checked = true;
+            if (this.removeDuplicates) this.removeDuplicates.checked = true;
+            if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
+            if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
+            if (this.dehyphenate) this.dehyphenate.checked = true;
+            if (this.mergeBrokenLines) this.mergeBrokenLines.checked = false; // OFF in Conservative
+            if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false; // OFF in Conservative
+            if (this.keepTableSpacing) this.keepTableSpacing.checked = true;
         }
     }
 
@@ -917,44 +1472,97 @@ class App {
             });
         }
         
-        // Settings change - update start button state (don't reprocess automatically)
+        // Settings change - save settings and update start button state
         if (this.removeEmptyLines) {
             this.removeEmptyLines.addEventListener('change', () => {
-                // Settings changed - don't auto-process, just update button state
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
         if (this.removePageNumbers) {
             this.removePageNumbers.addEventListener('change', () => {
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
         if (this.removeHeadersFooters) {
             this.removeHeadersFooters.addEventListener('change', () => {
+                this.saveSettings();
+                this.updateStartButton();
+            });
+        }
+        if (this.removeRepeatingHeadersFooters) {
+            this.removeRepeatingHeadersFooters.addEventListener('change', () => {
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
         if (this.removeDuplicates) {
             this.removeDuplicates.addEventListener('change', () => {
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
         if (this.removePunctuationLines) {
             this.removePunctuationLines.addEventListener('change', () => {
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
         if (this.preserveParagraphSpacing) {
             this.preserveParagraphSpacing.addEventListener('change', () => {
+                this.saveSettings();
                 this.updateStartButton();
             });
         }
+        if (this.dehyphenate) {
+            this.dehyphenate.addEventListener('change', () => {
+                this.saveSettings();
+                this.updateStartButton();
+            });
+        }
+        if (this.mergeBrokenLines) {
+            this.mergeBrokenLines.addEventListener('change', () => {
+                this.saveSettings();
+            });
+        }
+        if (this.normalizeWhitespace) {
+            this.normalizeWhitespace.addEventListener('change', () => {
+                this.saveSettings();
+            });
+        }
+        if (this.keepTableSpacing) {
+            this.keepTableSpacing.addEventListener('change', () => {
+                this.saveSettings();
+            });
+        }
         
-        // Mode selection handlers
+        // Mode type selection handlers (Conservative/Aggressive)
+        if (this.conservativeMode) {
+            this.conservativeMode.addEventListener('change', () => {
+                if (this.conservativeMode.checked) {
+                    this.cleaningModeType = 'conservative';
+                    this.applyModeDefaults();
+                    this.saveSettings();
+                }
+            });
+        }
+        if (this.aggressiveMode) {
+            this.aggressiveMode.addEventListener('change', () => {
+                if (this.aggressiveMode.checked) {
+                    this.cleaningModeType = 'aggressive';
+                    this.applyModeDefaults();
+                    this.saveSettings();
+                }
+            });
+        }
+        
+        // Mode selection handlers (Fast/Smart)
         if (this.fastMode) {
             this.fastMode.addEventListener('change', () => {
                 if (this.fastMode.checked) {
                     this.cleaningMode = 'fast';
+                    this.saveSettings();
                     this.updateModeUI();
                 }
             });
@@ -963,6 +1571,7 @@ class App {
             this.smartMode.addEventListener('change', () => {
                 if (this.smartMode.checked) {
                     this.cleaningMode = 'smart';
+                    this.saveSettings();
                     this.updateModeUI();
                 }
             });
@@ -1118,9 +1727,14 @@ class App {
             removeEmptyLines: this.removeEmptyLines ? this.removeEmptyLines.checked : true,
             removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
             removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true,
+            removeRepeatingHeadersFooters: this.removeRepeatingHeadersFooters ? this.removeRepeatingHeadersFooters.checked : true,
             removeDuplicates: this.removeDuplicates ? this.removeDuplicates.checked : true,
             removePunctuationLines: this.removePunctuationLines ? this.removePunctuationLines.checked : true,
             preserveParagraphSpacing: this.preserveParagraphSpacing ? this.preserveParagraphSpacing.checked : true,
+            dehyphenate: this.dehyphenate ? this.dehyphenate.checked : true,
+            mergeBrokenLines: this.mergeBrokenLines ? this.mergeBrokenLines.checked : false,
+            normalizeWhitespace: this.normalizeWhitespace ? this.normalizeWhitespace.checked : false,
+            keepTableSpacing: this.keepTableSpacing ? this.keepTableSpacing.checked : true,
         };
 
         // Create new stripper instance with current settings (for Fast mode or fallback)
@@ -1147,6 +1761,9 @@ class App {
             emptyLinesRemoved: 0,
             headerFooterRemoved: 0,
             punctuationLinesRemoved: 0,
+            dehyphenatedTokens: 0,
+            repeatingHeadersFootersRemoved: 0,
+            mergedLines: 0,
         };
 
         try {
@@ -1188,11 +1805,14 @@ class App {
                 
                 if (result.success) {
                     totalStats.filesProcessed++;
-                    totalStats.linesRemoved += result.stats.linesRemoved;
+                    totalStats.linesRemoved += result.stats.linesRemoved || 0;
                     totalStats.duplicatesCollapsed += result.stats.duplicatesCollapsed || 0;
                     totalStats.emptyLinesRemoved += result.stats.emptyLinesRemoved || 0;
                     totalStats.headerFooterRemoved += result.stats.headerFooterRemoved || 0;
                     totalStats.punctuationLinesRemoved += result.stats.punctuationLinesRemoved || 0;
+                    totalStats.dehyphenatedTokens = (totalStats.dehyphenatedTokens || 0) + (result.stats.dehyphenatedTokens || 0);
+                    totalStats.repeatingHeadersFootersRemoved = (totalStats.repeatingHeadersFootersRemoved || 0) + (result.stats.repeatingHeadersFootersRemoved || 0);
+                    totalStats.mergedLines = (totalStats.mergedLines || 0) + (result.stats.mergedLines || 0);
                 }
             }
         } finally {
@@ -1210,6 +1830,128 @@ class App {
         setTimeout(() => {
             this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
+    }
+
+    // Virtualization helper for large texts
+    createVirtualizedPreview(text, containerId, maxRenderSize = 1024 * 1024) {
+        const needsVirtualization = text.length > maxRenderSize;
+        const lines = text.split('\n');
+        const totalLines = lines.length;
+        
+        if (!needsVirtualization) {
+            // Simple rendering for small texts
+            return `<pre class="text-preview-content">${this.escapeHtml(text)}</pre>`;
+        }
+        
+        // Virtualized rendering for large texts
+        const visibleRange = 200; // Render ~200 lines at a time
+        
+        // Create scrollable container
+        const virtualizedHTML = `
+            <div class="virtualized-container" data-total-lines="${totalLines}" data-container-id="${containerId}">
+                <div class="virtualized-spacer-top" style="height: 0px;"></div>
+                <pre class="text-preview-content virtualized-content"></pre>
+                <div class="virtualized-spacer-bottom" style="height: 0px;"></div>
+            </div>
+        `;
+        
+        // Store lines data for later setup
+        this._virtualizationData = this._virtualizationData || {};
+        this._virtualizationData[containerId] = {
+            lines: lines,
+            visibleRange: visibleRange
+        };
+        
+        // Setup scroll handler after DOM is ready
+        setTimeout(() => {
+            this.setupVirtualization(containerId);
+        }, 100);
+        
+        return virtualizedHTML;
+    }
+    
+    setupVirtualization(containerId) {
+        const data = this._virtualizationData?.[containerId];
+        if (!data) return;
+        
+        const container = document.querySelector(`[data-container-id="${containerId}"]`);
+        if (!container) {
+            // Retry after a short delay if container not found
+            setTimeout(() => this.setupVirtualization(containerId), 200);
+            return;
+        }
+        
+        const spacerTop = container.querySelector('.virtualized-spacer-top');
+        const content = container.querySelector('.virtualized-content');
+        const spacerBottom = container.querySelector('.virtualized-spacer-bottom');
+        
+        if (!spacerTop || !content || !spacerBottom) return;
+        
+        const lines = data.lines;
+        const lineHeight = 20; // Approximate line height in pixels
+        const totalLines = lines.length;
+        
+        // Find the scrollable parent container
+        let diffContent = container.closest('.diff-content');
+        if (!diffContent) {
+            // Try finding by ID
+            diffContent = document.getElementById(containerId)?.parentElement;
+        }
+        
+        if (!diffContent) {
+            console.warn('Could not find scrollable container for virtualization');
+            // Fallback: render all content
+            content.textContent = lines.join('\n');
+            return;
+        }
+        
+        const containerHeight = diffContent.clientHeight || 600;
+        const visibleLines = Math.ceil(containerHeight / lineHeight);
+        
+        const updateVisibleContent = () => {
+            const scrollTop = diffContent.scrollTop || 0;
+            const startLine = Math.max(0, Math.floor(scrollTop / lineHeight) - 100);
+            const endLine = Math.min(totalLines, startLine + visibleLines + 200);
+            
+            const visibleLinesSlice = lines.slice(startLine, endLine);
+            content.textContent = visibleLinesSlice.join('\n');
+            
+            // Update spacers
+            spacerTop.style.height = `${startLine * lineHeight}px`;
+            spacerBottom.style.height = `${(totalLines - endLine) * lineHeight}px`;
+        };
+        
+        // Initial render
+        updateVisibleContent();
+        
+        // Setup scroll listener on the diff-content container
+        diffContent.addEventListener('scroll', updateVisibleContent);
+        
+        // Store cleanup function
+        container._cleanup = () => {
+            diffContent.removeEventListener('scroll', updateVisibleContent);
+        };
+    }
+    
+    formatStatsLine(stats, originalLineCount) {
+        const cleanedLineCount = originalLineCount - (stats.linesRemoved || 0);
+        const parts = [
+            `Lines: ${originalLineCount} → ${cleanedLineCount}`,
+            `Removed: ${stats.emptyLinesRemoved || 0} empty, ${stats.headerFooterRemoved || 0} headers/footers, ${stats.punctuationLinesRemoved || 0} punctuation`,
+            `Collapsed: ${stats.duplicatesCollapsed || 0} duplicates`,
+        ];
+        
+        if (stats.mergedLines) {
+            parts.push(`${stats.mergedLines} merged`);
+        }
+        if (stats.dehyphenatedTokens) {
+            parts.push(`${stats.dehyphenatedTokens} dehyphenated`);
+        }
+        if (stats.repeatingHeadersFootersRemoved) {
+            parts.push(`${stats.repeatingHeadersFootersRemoved} repeating headers/footers`);
+        }
+        
+        return parts.join(' | ');
     }
 
     displayResults(results, totalStats) {
@@ -1246,11 +1988,29 @@ class App {
                         <span class="stat-label">Punctuation Lines Removed</span>
                     </div>
                     ` : ''}
+                    ${totalStats.dehyphenatedTokens > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-value">${totalStats.dehyphenatedTokens}</span>
+                        <span class="stat-label">Dehyphenated Tokens</span>
+                    </div>
+                    ` : ''}
+                    ${totalStats.repeatingHeadersFootersRemoved > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-value">${totalStats.repeatingHeadersFootersRemoved}</span>
+                        <span class="stat-label">Repeating Headers/Footers Removed</span>
+                    </div>
+                    ` : ''}
+                    ${totalStats.mergedLines > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-value">${totalStats.mergedLines}</span>
+                        <span class="stat-label">Lines Merged</span>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;
 
-        // Individual file results
+        // Individual file results with side-by-side preview
         results.forEach((result, index) => {
             if (!result.success) {
                 html += `
@@ -1262,33 +2022,57 @@ class App {
                 return;
             }
 
-            const displayText = result.cleanedText;
+            const originalLines = result.originalText.split('\n').length;
+            const statsLine = this.formatStatsLine(result.stats, originalLines);
             const modeBadge = result.mode === 'smart' ? '<span class="mode-badge smart">🤖 Smart Clean</span>' : 
                              result.mode === 'fast-fallback' ? '<span class="mode-badge fallback">⚡ Fast (Fallback)</span>' : 
                              '<span class="mode-badge fast">⚡ Fast Clean</span>';
+            
+            const originalContainerId = `original-${index}`;
+            const cleanedContainerId = `cleaned-${index}`;
+            const originalNeedsVirtual = result.originalText.length > 1024 * 1024;
+            const cleanedNeedsVirtual = result.cleanedText.length > 1024 * 1024;
 
             html += `
                 <div class="result-card">
                     <div class="result-header">
                         <h4>${this.escapeHtml(result.fileName)} ${modeBadge}</h4>
-                        <div class="result-stats">
-                            <span>${result.stats.linesRemoved} lines removed</span>
-                            ${result.stats.duplicatesCollapsed > 0 ? `<span>${result.stats.duplicatesCollapsed} duplicates</span>` : ''}
-                            ${result.stats.headerFooterRemoved > 0 ? `<span>${result.stats.headerFooterRemoved} headers/footers</span>` : ''}
-                            ${result.stats.punctuationLinesRemoved > 0 ? `<span>${result.stats.punctuationLinesRemoved} punctuation</span>` : ''}
-                        </div>
                     </div>
                     <div class="result-content">
-                        <div class="text-preview">
-                            <pre>${this.escapeHtml(displayText)}</pre>
+                        <div class="diff-container">
+                            <div class="diff-column original-column">
+                                <div class="diff-header">
+                                    <h5>Original</h5>
+                                </div>
+                                <div class="diff-content" id="${originalContainerId}">
+                                    ${originalNeedsVirtual ? 
+                                        this.createVirtualizedPreview(result.originalText, originalContainerId) :
+                                        `<pre class="text-preview-content">${this.escapeHtml(result.originalText)}</pre>`
+                                    }
+                                </div>
+                            </div>
+                            <div class="diff-column cleaned-column">
+                                <div class="diff-header">
+                                    <h5>Cleaned</h5>
+                                    <div class="diff-actions">
+                                        <button class="btn btn-primary download-btn" data-index="${index}">
+                                            📥 Download
+                                        </button>
+                                        <button class="btn btn-secondary copy-btn" data-index="${index}">
+                                            📋 Copy
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="diff-content" id="${cleanedContainerId}">
+                                    ${cleanedNeedsVirtual ? 
+                                        this.createVirtualizedPreview(result.cleanedText, cleanedContainerId) :
+                                        `<pre class="text-preview-content">${this.escapeHtml(result.cleanedText)}</pre>`
+                                    }
+                                </div>
+                            </div>
                         </div>
-                        <div class="result-actions">
-                            <button class="btn btn-primary download-btn" data-index="${index}">
-                                📥 Download Cleaned File
-                            </button>
-                            <button class="btn btn-secondary copy-btn" data-index="${index}">
-                                📋 Copy to Clipboard
-                            </button>
+                        <div class="stats-line">
+                            ${statsLine}
                         </div>
                     </div>
                 </div>
