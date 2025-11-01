@@ -463,7 +463,43 @@ class DocStripper {
         const dehyphenResult = this.dehyphenateText(text);
         text = dehyphenResult.text;
         
-        // Apply merge broken lines (before whitespace normalization)
+        // FIRST: Remove headers/footers/page numbers BEFORE merge (to avoid merging them with content)
+        let lines = text.split('\n');
+        const preMergeLines = [];
+        let headerFooterRemovedBeforeMerge = 0;
+        
+        // Detect repeating headers/footers across pages (before merge)
+        const pageBoundaries = this.detectPages(text);
+        const repeatingHeadersFooters = this.detectRepeatingHeadersFooters(text, pageBoundaries);
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const stripped = line.trim();
+            
+            // Skip headers/footers (if enabled) - BEFORE merge
+            if (this.options.removeHeadersFooters && this.isHeaderFooter(stripped)) {
+                headerFooterRemovedBeforeMerge++;
+                continue;
+            }
+            
+            // Skip page numbers (if enabled) - BEFORE merge
+            if (this.options.removePageNumbers && this.isPageNumber(stripped)) {
+                headerFooterRemovedBeforeMerge++;
+                continue;
+            }
+            
+            // Skip repeating headers/footers across pages (if enabled) - BEFORE merge
+            if (this.options.removeRepeatingHeadersFooters && repeatingHeadersFooters.has(stripped)) {
+                headerFooterRemovedBeforeMerge++;
+                continue;
+            }
+            
+            preMergeLines.push(line);
+        }
+        
+        text = preMergeLines.join('\n');
+        
+        // Apply merge broken lines (after removing headers/footers)
         const mergeResult = this.mergeBrokenLines(text);
         text = mergeResult.text;
         
@@ -475,7 +511,8 @@ class DocStripper {
         const unicodeResult = this.normalizeUnicodePunctuation(text);
         text = unicodeResult.text;
 
-        const lines = text.split('\n');
+        // SECOND: Process remaining lines for other cleaning operations
+        lines = text.split('\n');
         const cleanedLines = [];
         let prevLine = null;
         let prevNonEmptyLine = null;
@@ -483,16 +520,12 @@ class DocStripper {
             linesRemoved: 0,
             duplicatesCollapsed: 0,
             emptyLinesRemoved: 0,
-            headerFooterRemoved: 0,
+            headerFooterRemoved: headerFooterRemovedBeforeMerge, // Include headers/footers removed before merge
             punctuationLinesRemoved: 0,
             dehyphenatedTokens: dehyphenResult.tokensFixed,
             repeatingHeadersFootersRemoved: 0,
             mergedLines: mergeResult.linesMerged,
         };
-        
-        // Detect repeating headers/footers across pages
-        const pageBoundaries = this.detectPages(text);
-        const repeatingHeadersFooters = this.detectRepeatingHeadersFooters(text, pageBoundaries);
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -531,24 +564,6 @@ class DocStripper {
                 continue;
             }
 
-            // Skip page numbers (if enabled)
-            if (this.options.removePageNumbers && this.isPageNumber(stripped)) {
-                stats.headerFooterRemoved++;
-                continue;
-            }
-
-            // Skip headers/footers (if enabled)
-            if (this.options.removeHeadersFooters && this.isHeaderFooter(stripped)) {
-                stats.headerFooterRemoved++;
-                continue;
-            }
-            
-            // Skip repeating headers/footers across pages (if enabled)
-            if (repeatingHeadersFooters.has(stripped)) {
-                stats.repeatingHeadersFootersRemoved++;
-                continue;
-            }
-
             // Skip consecutive duplicates (if enabled)
             if (this.options.removeDuplicates && prevLine !== null && stripped === prevLine.trim()) {
                 stats.duplicatesCollapsed++;
@@ -560,7 +575,7 @@ class DocStripper {
             prevNonEmptyLine = line;
         }
 
-        stats.linesRemoved = lines.length - cleanedLines.length;
+        stats.linesRemoved = lines.length - cleanedLines.length + headerFooterRemovedBeforeMerge;
         return {
             text: cleanedLines.join('\n'),
             stats: stats
