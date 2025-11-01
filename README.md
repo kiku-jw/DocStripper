@@ -128,8 +128,8 @@ All Conservative features plus:
 | Format | Status | Notes |
 |--------|--------|-------|
 | `.txt` | ✅ Full | UTF-8, Latin-1 |
-| `.docx` | ✅ Basic | Text extraction only |
-| `.pdf` | ✅ Basic | Requires `pdftotext` (poppler-utils) |
+| `.docx` | ✅ Basic | Text extraction only (Web + CLI) |
+| `.pdf` | ✅ Basic | Text extraction only (Web + CLI). Web uses PDF.js automatically. CLI requires `pdftotext` (poppler-utils) |
 
 **PDF Support:**
 - macOS: `brew install poppler`
