@@ -3,70 +3,54 @@
   
   # 🧹 DocStripper
   
-  > **AI-powered batch document cleaner** — Remove noise from text documents automatically with Fast or Smart Clean modes
+  > **AI-powered batch document cleaner** — Remove noise from text documents automatically
 </div>
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.txt)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Featured-orange)](https://www.producthunt.com/products/docstripper)
 
-**DocStripper** — AI-powered batch document cleaner that automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant rule-based) or **Smart Clean** (AI-powered with on-device LLM). Works entirely in your browser - 100% private, no uploads, no sign-ups. Perfect for students, researchers, and anyone working with scanned documents or PDFs.
+**DocStripper** automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant) or **Smart Clean** (AI-powered). Works entirely in your browser - 100% private, no uploads, no sign-ups.
 
 **🌐 [Try it online →](https://kiku-jw.github.io/DocStripper/)** — No installation needed!
-
-**Web App Features:**
-- ⚡ **Fast Clean** — Instant rule-based cleaning
-- 🤖 **Smart Clean (Beta)** — AI-powered cleaning with on-device LLM
-  - Requires WebGPU support (most modern browsers)
-  - One-time download of ~100-200 MB (model weights)
-  - Works offline after first load
-  - Mode-aware: Conservative/Aggressive modes affect LLM prompts
-  - Post-processing: Applies dehyphenation, merge lines, and whitespace normalization after LLM processing
-  - Fully customizable via cleaning options
 
 ---
 
 ## ✨ Features
 
-### Web Application
-- 🚀 **Fast Clean** — Rule-based cleaning (instant)
-- 🤖 **Smart Clean (Beta)** — AI-powered cleaning using on-device LLM (WebLLM)
-  - Mode-aware prompts: Conservative/Aggressive modes influence LLM behavior
-  - Post-processing: Dehyphenation, merge lines, and whitespace normalization applied after LLM processing
-- 🛡️ **Conservative Mode** — Safe defaults (recommended, preserves lists and tables)
-- ⚡ **Aggressive Mode** — More aggressive cleaning with merge and whitespace normalization
-- ⚙️ **Advanced Options** — All cleaning options available in collapsible menu
-- 🔄 **Side-by-Side Preview** — Compare Original | Cleaned with virtualization for large files
+- ⚡ **Fast Clean** — Instant rule-based cleaning
+- 🤖 **Smart Clean (Beta)** — AI-powered cleaning with on-device LLM
+- 🛡️ **Conservative Mode** — Safe defaults (recommended)
+- ⚡ **Aggressive Mode** — More aggressive cleaning
+- 🔄 **Side-by-Side Preview** — Compare Original | Cleaned
 - 💾 **Settings Persistence** — Your preferences are saved automatically
 - 🔒 **100% Private** — All processing happens in your browser
 - 📊 **Real-time Statistics** — See exactly what was removed
 - 📥 **Download & Copy** — Download cleaned files or copy to clipboard
 - 🎨 **Dark Theme** — Toggle between light and dark themes
-- 📱 **Mobile Responsive** — Optimized for mobile devices
-
-### CLI Tool
-- 🚀 **Fast & Lightweight** — Uses only Python stdlib, no external packages
-- 🔒 **Privacy-First** — All processing happens offline
-- 📊 **Dry-Run Mode** — Preview changes before applying
-- 🔄 **Undo Support** — Restore files from backups
-- 🌍 **Cross-Platform** — Works on Windows, macOS, and Linux
-- 📚 **Multiple Formats** — Supports `.txt`, `.docx`, and `.pdf` files
+- 📱 **Mobile Responsive** — Works great on mobile devices
 
 ---
 
 ## 🎯 Quick Start
 
-### Installation
+### Web App (Recommended)
+
+1. Visit [https://kiku-jw.github.io/DocStripper/](https://kiku-jw.github.io/DocStripper/)
+2. Upload your files
+3. Choose **Fast Clean** (instant) or **Smart Clean** (AI-powered)
+4. Select **Conservative** (safe) or **Aggressive** (more thorough)
+5. Click "Start Cleaning"
+6. Download or copy the cleaned results
+
+### CLI Tool
 
 ```bash
+# Install
 git clone https://github.com/kiku-jw/DocStripper.git
 cd DocStripper
-```
 
-### Usage
-
-```bash
-# Clean a single file
+# Clean a file
 python tool.py document.txt
 
 # Clean multiple files
@@ -96,10 +80,6 @@ Important content here.
 1
 2
 3
-
-Page 2 of 10
-Confidential - Internal Use Only
-More content.
 ```
 
 **After (Conservative Mode):**
@@ -110,62 +90,36 @@ Important content here.
 More content.
 ```
 
-**After (Aggressive Mode):**
-```
-Executive Summary
-This is automatic text processing. Important content here.
-More content.
-```
-
 **Key Changes:**
-- Page numbers removed (1, 2, 3)
-- Headers/footers removed (Page X of Y, Confidential)
-- Repeating headers removed (Confidential - Internal Use Only appeared on 2/2 pages)
-- Duplicates collapsed (Important content here.)
-- Hyphenation fixed (auto-\nmatic → automatic)
-- Empty lines removed
-- *(Aggressive mode also merged broken lines)*
+- ✅ Page numbers removed
+- ✅ Headers/footers removed
+- ✅ Repeating headers removed
+- ✅ Duplicates collapsed
+- ✅ Hyphenation fixed
+- ✅ Empty lines removed
 
 ---
 
 ## 🎨 What Gets Removed?
 
-### Basic Cleaning (Conservative Mode - Default)
-- **Page numbers** — Lines with only digits (1, 2, 3...), Roman numerals (I, II, III), or letters (A, B, C)
-- **Headers/Footers** — Common patterns like "Page X of Y", "Confidential", "DRAFT", "INTERNAL USE ONLY"
-- **Repeating Headers/Footers** — Headers/footers that appear on ≥70% of pages (detected automatically)
-- **Duplicate lines** — Consecutive identical lines
-- **Empty lines** — Whitespace-only lines (optional: preserve paragraph spacing)
-- **Punctuation lines** — Lines with only symbols (---, ***, ===) or single bullets (•, *, ·)
-- **Hyphenation** — Safe dehyphenation: "auto-\nmatic" → "automatic" (only lowercase continuations)
-
-### Advanced Cleaning (Aggressive Mode)
-All Conservative features plus:
-- **Merge Broken Lines** — Merge lines broken mid-sentence (protects lists and tables)
-- **Whitespace Normalization** — Collapse multiple spaces, normalize tabs (protects tables)
-- **Unicode Punctuation** — Normalize curly quotes and dashes to ASCII (optional, default OFF)
-
-### Protection Features
-- **List Protection** — Bullet and numbered lists are never merged or broken
-- **Table Protection** — Table spacing is preserved when normalization is enabled
-- **Content Safety** — Content headers and meaningful text are never removed
-
-## 🎛️ Cleaning Modes
-
-### Conservative Mode (Default)
-Safe defaults recommended for most users:
-- ✅ Removes noise (headers, footers, page numbers, duplicates)
-- ✅ Dehyphenates broken words
-- ✅ Removes repeating headers/footers across pages
-- ✅ Preserves lists and tables
-- ✅ Never merges lines or normalizes whitespace
+### Conservative Mode (Default - Recommended)
+- Page numbers (1, 2, 3...)
+- Headers/footers ("Page X of Y", "Confidential", etc.)
+- Repeating headers/footers across pages
+- Duplicate lines
+- Empty lines
+- Punctuation-only lines (---, ***, ===)
+- Hyphenation fixed (auto-\nmatic → automatic)
 
 ### Aggressive Mode
-For more aggressive cleaning:
-- ✅ All Conservative features enabled
-- ✅ Merges broken lines (with list/table protection)
-- ✅ Normalizes whitespace (with table protection)
-- ⚠️ Use with caution: may affect formatting in some documents
+All Conservative features plus:
+- Merges broken lines (protects lists and tables)
+- Normalizes whitespace (protects tables)
+
+**Protection Features:**
+- ✅ Lists are never merged or broken
+- ✅ Tables preserve spacing
+- ✅ Content headers never removed
 
 ---
 
@@ -177,63 +131,23 @@ For more aggressive cleaning:
 | `.docx` | ✅ Basic | Text extraction only |
 | `.pdf` | ✅ Basic | Requires `pdftotext` (poppler-utils) |
 
-**PDF Support Installation:**
-
-- **macOS:** `brew install poppler`
-- **Ubuntu/Debian:** `sudo apt-get install poppler-utils`
-- **Windows:** Download from [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases/)
-
----
-
-## 📊 Command Line Options
-
-```bash
-python tool.py [OPTIONS] [FILES...]
-
-Options:
-  -h, --help     Show help message
-  --dry-run      Preview changes without modifying files
-  --undo         Restore files from last operation
-```
-
-**Note:** CLI version uses Conservative mode by default. Advanced features (merge lines, whitespace normalization) are available programmatically but disabled by default for safety.
+**PDF Support:**
+- macOS: `brew install poppler`
+- Ubuntu/Debian: `sudo apt-get install poppler-utils`
+- Windows: Download from [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases/)
 
 ---
 
 ## 🔧 Requirements
 
-- **Python 3.9+**
+- **Python 3.9+** (for CLI tool)
 - **PDF support** (optional): `pdftotext` from poppler-utils
-
-## 🧪 Testing
-
-See [SELF_TESTS.md](SELF_TESTS.md) for manual test steps and expected results.
-
-Test fixtures are available in the `examples/` directory:
-- `fixture1_headers_footers.txt` - Headers/footers + page numbers
-- `fixture2_hyphenation.txt` - Hyphenation + mid-sentence wraps
-- `fixture3_lists_tables.txt` - Lists & pseudo-tables
-
-## 🔍 Technical Details
-
-### Confidence Thresholds
-- **Repeating Headers/Footers**: Requires ≥70% frequency across pages and ≥8 characters (to avoid removing short content headers)
-
-### Protection Mechanisms
-- **List Detection**: Recognizes bullet lists (`-`, `•`, `*`, `·`) and numbered lists (`1.`, `1)`)
-- **Table Detection**: Detects ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions
-- **Dehyphenation Safety**: Only merges when hyphen is followed by lowercase continuation (avoids false positives)
-
-### Performance
-- **Conservative Mode**: Single pass, instant for files < 1MB
-- **Aggressive Mode**: May require chunking for files > 1MB
-- **Web Version**: Virtualization for files > 1MB ensures smooth UI
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License — see the [LICENSE.txt](LICENSE.txt) file for details.
+MIT License — see [LICENSE.txt](LICENSE.txt) for details.
 
 ---
 
