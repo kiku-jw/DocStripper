@@ -1,0 +1,20 @@
+# Template files
+*.template
+*.backup
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Keep actual template files
+!.github/
+!docs/
+
+
+

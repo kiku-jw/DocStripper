@@ -705,6 +705,11 @@ class SmartCleaner {
             removeDuplicates: true,
             removePunctuationLines: true,
             preserveParagraphSpacing: true,
+            dehyphenate: true,
+            mergeBrokenLines: false,
+            normalizeWhitespace: false,
+            keepTableSpacing: true,
+            cleaningModeType: 'conservative', // 'conservative' or 'aggressive'
         };
     }
     
@@ -900,6 +905,14 @@ class SmartCleaner {
         
         // Build rules section
         const rules = [];
+        
+        // Add mode-specific guidance
+        const modeGuidance = this.settings.cleaningModeType === 'aggressive' 
+            ? 'AGGRESSIVE MODE: Be thorough in cleaning. You can merge broken lines and normalize formatting when appropriate.'
+            : 'CONSERVATIVE MODE: Be cautious and preserve structure. When in doubt, keep content. Do not merge lines or normalize formatting aggressively.';
+        
+        rules.push(`0. MODE: ${modeGuidance}`);
+        
         if (this.settings.removeDuplicates) {
             rules.push('1. For consecutive duplicate lines: keep the FIRST occurrence, drop subsequent ones');
         }
@@ -1053,6 +1066,207 @@ Respond with JSON only:`;
         return result.join('\n');
     }
 
+    // Post-processing methods (similar to DocStripper but adapted for SmartCleaner)
+    dehyphenateText(text) {
+        if (!text || !this.settings.dehyphenate) {
+            return { text: text || '', tokensFixed: 0 };
+        }
+        
+        // Count matches before replacement
+        const matches = text.match(/-\n([a-z]{1,})/g);
+        const tokensFixed = matches ? matches.length : 0;
+        
+        // Replace "-\n[a-z]" with just the lowercase part (safe dehyphenation)
+        const dehyphenated = text.replace(/-\n([a-z]{1,})/g, '$1');
+        
+        return { text: dehyphenated, tokensFixed };
+    }
+
+    isListMarker(line) {
+        const stripped = line.trim();
+        // Bullet lists: - , • , * , · 
+        if (/^\s*([-•*·])\s+/.test(stripped)) return true;
+        // Ordered lists: 1. , 1) , etc.
+        if (/^\s*\d+[.)]\s+/.test(stripped)) return true;
+        return false;
+    }
+
+    detectTableBlock(lines, startIdx) {
+        // Detect table-like blocks: ≥3 consecutive lines with ≥2 runs of ≥2 spaces at similar positions
+        if (startIdx >= lines.length - 2) return { isTable: false, endIdx: startIdx };
+        
+        const checkLines = lines.slice(startIdx, Math.min(startIdx + 10, lines.length)); // Check up to 10 lines
+        let consecutiveTableLines = 0;
+        const spacePatterns = [];
+        
+        for (let i = 0; i < checkLines.length; i++) {
+            const line = checkLines[i];
+            if (!line.trim()) break; // Empty line breaks table pattern
+            
+            // Find positions of multiple spaces (≥2 spaces)
+            const matches = [];
+            let match;
+            const regex = / {2,}/g;
+            while ((match = regex.exec(line)) !== null) {
+                matches.push(match.index);
+            }
+            
+            if (matches.length >= 2) {
+                spacePatterns.push(matches);
+                consecutiveTableLines++;
+            } else {
+                break;
+            }
+        }
+        
+        if (consecutiveTableLines >= 3) {
+            // Check if space positions are similar across lines
+            let similarPositions = 0;
+            for (let i = 0; i < spacePatterns.length - 1; i++) {
+                const current = spacePatterns[i];
+                const next = spacePatterns[i + 1];
+                // Check if at least 2 positions are similar (within 3 chars)
+                let matches = 0;
+                for (const pos1 of current) {
+                    for (const pos2 of next) {
+                        if (Math.abs(pos1 - pos2) <= 3) {
+                            matches++;
+                            break;
+                        }
+                    }
+                }
+                if (matches >= 2) similarPositions++;
+            }
+            
+            if (similarPositions >= 2) {
+                // Find end of table block
+                let endIdx = startIdx + consecutiveTableLines;
+                // Extend if next lines also match pattern
+                while (endIdx < lines.length && endIdx < startIdx + 50) { // Max 50 lines
+                    const line = lines[endIdx];
+                    if (!line.trim()) break;
+                    const matches = line.match(/ {2,}/g);
+                    if (matches && matches.length >= 2) {
+                        endIdx++;
+                        consecutiveTableLines++;
+                    } else {
+                        break;
+                    }
+                }
+                return { isTable: true, endIdx };
+            }
+        }
+        
+        return { isTable: false, endIdx: startIdx };
+    }
+
+    mergeBrokenLines(text) {
+        if (!this.settings.mergeBrokenLines) {
+            return { text, linesMerged: 0 };
+        }
+        
+        const lines = text.split('\n');
+        const mergedLines = [];
+        let linesMerged = 0;
+        let tableBlockEnd = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            // Check if we're in a table block
+            if (i >= tableBlockEnd) {
+                const tableCheck = this.detectTableBlock(lines, i);
+                if (tableCheck.isTable) {
+                    tableBlockEnd = tableCheck.endIdx;
+                }
+            }
+            
+            // Skip merge if in table block
+            if (i < tableBlockEnd) {
+                mergedLines.push(lines[i]);
+                continue;
+            }
+            
+            // Check if we should merge with previous line
+            if (mergedLines.length > 0) {
+                const prevLine = mergedLines[mergedLines.length - 1];
+                const currentLine = lines[i];
+                
+                // Don't merge if previous line is empty
+                if (!prevLine.trim()) {
+                    mergedLines.push(currentLine);
+                    continue;
+                }
+                
+                // Don't merge if current line is empty
+                if (!currentLine.trim()) {
+                    mergedLines.push(currentLine);
+                    continue;
+                }
+                
+                // Merge conditions:
+                // 1. Previous line doesn't end with [.!?]
+                // 2. Current line doesn't start with list marker
+                // 3. Next line (if exists) doesn't start with list marker (protect list context)
+                
+                const prevEndsWithPunct = /[.!?]\s*$/.test(prevLine);
+                const nextIsList = i < lines.length - 1 && lines[i + 1].trim() && this.isListMarker(lines[i + 1]);
+                const currentIsList = currentLine.trim() && this.isListMarker(currentLine);
+                
+                if (!prevEndsWithPunct && 
+                    !currentIsList && 
+                    !nextIsList) {
+                    // Merge: remove newline, add space
+                    mergedLines[mergedLines.length - 1] = prevLine.trimEnd() + ' ' + currentLine.trimStart();
+                    linesMerged++;
+                    continue;
+                }
+            }
+            
+            mergedLines.push(lines[i]);
+        }
+        
+        return { text: mergedLines.join('\n'), linesMerged };
+    }
+
+    normalizeWhitespace(text, skipTableBlocks) {
+        if (!this.settings.normalizeWhitespace) {
+            return { text, normalized: false };
+        }
+        
+        const lines = text.split('\n');
+        const normalizedLines = [];
+        let tableBlockEnd = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            
+            // Check if we're in a table block
+            if (skipTableBlocks && i >= tableBlockEnd) {
+                const tableCheck = this.detectTableBlock(lines, i);
+                if (tableCheck.isTable) {
+                    tableBlockEnd = tableCheck.endIdx;
+                }
+            }
+            
+            // Skip normalization if in table block
+            if (skipTableBlocks && i < tableBlockEnd) {
+                normalizedLines.push(line);
+                continue;
+            }
+            
+            // Normalize whitespace
+            // Collapse multiple spaces to single space
+            line = line.replace(/\s+/g, ' ');
+            // Normalize tabs to spaces
+            line = line.replace(/\t/g, ' ');
+            // Trim trailing spaces
+            line = line.replace(/\s+$/, '');
+            
+            normalizedLines.push(line);
+        }
+        
+        return { text: normalizedLines.join('\n'), normalized: true };
+    }
+
     async cleanText(text, settings = null) {
         if (!text) return { text: '', stats: this.getEmptyStats() };
 
@@ -1148,7 +1362,7 @@ Respond with JSON only:`;
                 }
             }
 
-            const cleanedText = result.join('\n');
+            let cleanedText = result.join('\n');
             const cleanedLineCount = cleanedText.split('\n').length;
             stats.linesRemoved = originalLineCount - cleanedLineCount;
 
@@ -1156,6 +1370,29 @@ Respond with JSON only:`;
             if (!cleanedText.trim() && text.trim()) {
                 console.warn('Smart clean produced empty result, using original text');
                 return { text: text, stats: this.getEmptyStats() };
+            }
+
+            // Apply post-processing operations (dehyphenation, merge lines, normalize whitespace)
+            // These are applied after LLM processing to ensure consistent behavior with Fast Clean mode
+            
+            // 1. Dehyphenation
+            if (this.settings.dehyphenate) {
+                const dehyphenResult = this.dehyphenateText(cleanedText);
+                cleanedText = dehyphenResult.text;
+                stats.dehyphenatedTokens = dehyphenResult.tokensFixed || 0;
+            }
+            
+            // 2. Merge broken lines (if enabled)
+            if (this.settings.mergeBrokenLines) {
+                const mergeResult = this.mergeBrokenLines(cleanedText);
+                cleanedText = mergeResult.text;
+                stats.mergedLines = mergeResult.linesMerged || 0;
+            }
+            
+            // 3. Normalize whitespace (if enabled, with table protection)
+            if (this.settings.normalizeWhitespace) {
+                const whitespaceResult = this.normalizeWhitespace(cleanedText, this.settings.keepTableSpacing);
+                cleanedText = whitespaceResult.text;
             }
 
             return {
@@ -1761,6 +1998,7 @@ class App {
             mergeBrokenLines: this.mergeBrokenLines ? this.mergeBrokenLines.checked : false,
             normalizeWhitespace: this.normalizeWhitespace ? this.normalizeWhitespace.checked : false,
             keepTableSpacing: this.keepTableSpacing ? this.keepTableSpacing.checked : true,
+            cleaningModeType: this.cleaningModeType, // Pass mode type to SmartCleaner
         };
 
         // Create new stripper instance with current settings (for Fast mode or fallback)
