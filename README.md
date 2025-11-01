@@ -20,6 +20,8 @@
   - Requires WebGPU support (most modern browsers)
   - One-time download of ~100-200 MB (model weights)
   - Works offline after first load
+  - Mode-aware: Conservative/Aggressive modes affect LLM prompts
+  - Post-processing: Applies dehyphenation, merge lines, and whitespace normalization after LLM processing
   - Fully customizable via cleaning options
 
 ---
@@ -29,15 +31,18 @@
 ### Web Application
 - 🚀 **Fast Clean** — Rule-based cleaning (instant)
 - 🤖 **Smart Clean (Beta)** — AI-powered cleaning using on-device LLM (WebLLM)
+  - Mode-aware prompts: Conservative/Aggressive modes influence LLM behavior
+  - Post-processing: Dehyphenation, merge lines, and whitespace normalization applied after LLM processing
 - 🛡️ **Conservative Mode** — Safe defaults (recommended, preserves lists and tables)
 - ⚡ **Aggressive Mode** — More aggressive cleaning with merge and whitespace normalization
-- ⚙️ **Customizable Options** — Configure what gets removed
+- ⚙️ **Advanced Options** — All cleaning options available in collapsible menu
 - 🔄 **Side-by-Side Preview** — Compare Original | Cleaned with virtualization for large files
 - 💾 **Settings Persistence** — Your preferences are saved automatically
 - 🔒 **100% Private** — All processing happens in your browser
 - 📊 **Real-time Statistics** — See exactly what was removed
 - 📥 **Download & Copy** — Download cleaned files or copy to clipboard
 - 🎨 **Dark Theme** — Toggle between light and dark themes
+- 📱 **Mobile Responsive** — Optimized for mobile devices
 
 ### CLI Tool
 - 🚀 **Fast & Lightweight** — Uses only Python stdlib, no external packages
