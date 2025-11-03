@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+"""
+Self-test script for DocStripper
+Tests both unit tests and real files from test_files/
+"""
 import sys
+import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -11,7 +16,13 @@ def assert_contains(text, needle):
     assert needle in text, f"Expected to find '{needle}' in output"
 
 
-def run_tests():
+def assert_not_contains(text, needle):
+    assert needle not in text, f"Expected NOT to find '{needle}' in output"
+
+
+def run_unit_tests():
+    """Run basic unit tests"""
+    print("Running unit tests...")
     ds = DocStripper(dry_run=True)
 
     # Dehyphenation
@@ -59,10 +70,105 @@ def run_tests():
                                remove_headers=False)
     assert "Page 2" in cleaned
 
-    print("Self tests passed.")
+    print("✓ Unit tests passed")
+
+
+def run_file_tests():
+    """Test on real files from test_files/"""
+    print("\nRunning file tests...")
+    
+    repo_root = Path(__file__).resolve().parents[1]
+    test_files_dir = repo_root / "test_files"
+    
+    if not test_files_dir.exists():
+        print(f"⚠ test_files directory not found at {test_files_dir}")
+        return 0
+    
+    test_files = sorted(test_files_dir.glob("*.txt"))
+    
+    if not test_files:
+        print(f"⚠ No .txt files found in {test_files_dir}")
+        return 0
+    
+    print(f"Found {len(test_files)} test file(s)")
+    
+    ds = DocStripper(dry_run=True, 
+                     merge_lines=True,
+                     dehyphenate=True,
+                     normalize_ws=True,
+                     normalize_unicode=True,
+                     remove_headers=True)
+    
+    passed = 0
+    failed = 0
+    
+    for test_file in test_files[:10]:  # Limit to 10 files
+        try:
+            with open(test_file, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            
+            if not content.strip():
+                print(f"  ⚠ {test_file.name}: empty file, skipping")
+                continue
+            
+            # Test cleaning
+            cleaned, stats = ds.clean_text(content,
+                                          merge_lines=True,
+                                          normalize_ws=True,
+                                          normalize_unicode=True,
+                                          dehyphenate=True,
+                                          remove_headers=True)
+            
+            # Basic sanity checks
+            assert len(cleaned) <= len(content) + 1000, f"Cleaned text too long for {test_file.name}"
+            assert isinstance(stats, dict), f"Stats should be dict for {test_file.name}"
+            
+            # Check that stats have expected keys
+            expected_keys = ['lines_removed', 'duplicates_collapsed', 'empty_lines_removed', 
+                           'header_footer_removed', 'dehyphenated_tokens', 'merged_lines']
+            for key in expected_keys:
+                assert key in stats, f"Missing stat '{key}' for {test_file.name}"
+            
+            print(f"  ✓ {test_file.name}: {len(content)} → {len(cleaned)} chars, "
+                  f"removed {stats.get('lines_removed', 0)} lines")
+            passed += 1
+            
+        except Exception as e:
+            print(f"  ✗ {test_file.name}: {e}")
+            failed += 1
+    
+    print(f"\nFile tests: {passed} passed, {failed} failed")
+    return failed
+
+
+def run_all_tests():
+    """Run all tests"""
+    print("=" * 60)
+    print("DocStripper Self-Test Suite")
+    print("=" * 60)
+    
+    try:
+        run_unit_tests()
+        file_failures = run_file_tests()
+        
+        print("\n" + "=" * 60)
+        if file_failures == 0:
+            print("✅ All tests passed!")
+            return 0
+        else:
+            print(f"❌ {file_failures} test(s) failed")
+            return 1
+    except AssertionError as e:
+        print(f"\n❌ Test failed: {e}")
+        return 1
+    except Exception as e:
+        print(f"\n❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == "__main__":
-    run_tests()
+    sys.exit(run_all_tests())
 
 

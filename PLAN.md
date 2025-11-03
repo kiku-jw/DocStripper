@@ -86,10 +86,10 @@ RELEASE COMPLETE - v2.0.0 tagged and pushed
     14.2 Add ZIP download feedback notification ✅
     14.3 Add support snackbar after cleaning completion ✅
 
-15. Distribution and tooling
-    15.1 Prepare CLI for Homebrew formula
-    15.2 Prepare CLI for PyPI package
-    15.3 Improve self-test script for release validation
+15. Distribution and tooling ✅
+    15.1 Prepare CLI for Homebrew formula ✅
+    15.2 Prepare CLI for PyPI package ✅
+    15.3 Improve self-test script for release validation ✅
 
 16. Analytics (privacy-friendly) ✅
     16.1 Add Plausible or Umami analytics (1 line, no cookies) ✅

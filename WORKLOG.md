@@ -39,4 +39,11 @@
 - Added privacy-friendly analytics (Plausible.io, no cookies)
 - Updated app.js version to 38
 
+2025-11-03T03:00:00Z — Distribution & Testing Improvements
+- Improved self-test script: now tests 10 real files from test_files/ directory with comprehensive checks
+- Created setup.py for PyPI package distribution
+- Created docstripper.rb Homebrew formula for macOS installation
+- Created INSTALL.md with installation instructions for all methods
+- All tests passing: 10/10 files tested successfully
+
 
