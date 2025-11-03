@@ -1,59 +1,97 @@
 # Homebrew Tap Setup Instructions
 
-## Quick Setup
+## Quick Setup (Step-by-Step)
 
-1. **Create a new repository on GitHub:**
-   - Repository name: `homebrew-docstripper`
-   - Make it public
-   - Don't initialize with README
+### Step 1: Create Tap Repository on GitHub
 
-2. **Clone and setup locally:**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/homebrew-docstripper.git
-   cd homebrew-docstripper
-   mkdir -p Formula
-   ```
+1. Go to https://github.com/new
+2. Repository name: `homebrew-docstripper`
+3. Make it **public**
+4. **Don't** initialize with README, .gitignore, or license
+5. Click "Create repository"
 
-3. **Copy and update the formula:**
-   ```bash
-   cp ../DocStripper/docstripper.rb Formula/docstripper.rb
-   ```
+### Step 2: Clone and Setup Locally
 
-4. **Update the formula URL to point to GitHub releases:**
-   
-   Edit `Formula/docstripper.rb` and update:
-   ```ruby
-   url "https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz"
-   sha256 "" # Calculate with: shasum -a 256 <downloaded_file>
-   ```
+```bash
+git clone https://github.com/kiku-jw/homebrew-docstripper.git
+cd homebrew-docstripper
+mkdir -p Formula
+```
 
-5. **Calculate SHA256:**
-   ```bash
-   # Download the release tarball first
-   curl -L https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz -o docstripper.tar.gz
-   shasum -a 256 docstripper.tar.gz
-   # Copy the hash to the formula
-   ```
+### Step 3: Copy Formula
 
-6. **Commit and push:**
-   ```bash
-   git add Formula/docstripper.rb
-   git commit -m "Add docstripper formula"
-   git push origin main
-   ```
+```bash
+# From DocStripper repo root
+cp docstripper.rb Formula/docstripper.rb
+cd Formula
+```
 
-7. **Users can now install with:**
-   ```bash
-   brew tap YOUR_USERNAME/docstripper
-   brew install docstripper
-   ```
+### Step 4: Create GitHub Release (if not exists)
 
-## Formula Template (for reference)
+You need a tagged release for Homebrew. If you don't have v2.1.0 release yet:
 
-The formula is already created in `docstripper.rb`. Make sure it has:
-- Correct URL pointing to GitHub releases
-- Correct SHA256 hash
-- Proper dependencies
+```bash
+# In DocStripper repo
+git tag v2.1.0
+git push origin v2.1.0
+```
+
+Then create a GitHub release at: https://github.com/kiku-jw/DocStripper/releases/new
+- Tag: v2.1.0
+- Title: v2.1.0
+- Description: (can be empty)
+
+### Step 5: Update Formula URL
+
+Edit `Formula/docstripper.rb` and update to point to the release:
+
+```ruby
+url "https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz"
+```
+
+### Step 6: Calculate SHA256 Hash
+
+```bash
+# Download the release tarball
+curl -L https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz -o docstripper.tar.gz
+
+# Calculate hash
+shasum -a 256 docstripper.tar.gz
+# Copy the hash (first part before spaces)
+```
+
+Update the formula:
+```ruby
+sha256 "PASTE_HASH_HERE"
+```
+
+### Step 7: Commit and Push
+
+```bash
+cd ..  # Back to tap repo root
+git add Formula/docstripper.rb
+git commit -m "Add docstripper formula"
+git push origin main
+```
+
+### Step 8: Test Installation
+
+```bash
+# Test locally first
+brew install --build-from-source Formula/docstripper.rb
+
+# If successful, users can now install with:
+brew tap kiku-jw/docstripper
+brew install docstripper
+```
+
+### Step 9: Update INSTALL.md and README
+
+Update installation instructions to mention the tap:
+```bash
+brew tap kiku-jw/docstripper
+brew install docstripper
+```
 
 ## Updating the Formula
 
@@ -63,10 +101,15 @@ When releasing a new version:
 3. Update version in formula
 4. Commit and push to tap repo
 
-## Testing
+## Troubleshooting
 
-Before pushing, test locally:
+**Formula fails to install:**
+- Check URL is accessible
+- Verify SHA256 hash matches
+- Ensure dependencies are correct
+- Test locally: `brew install --build-from-source Formula/docstripper.rb`
+
+**Formula audit:**
 ```bash
-brew install --build-from-source Formula/docstripper.rb
-brew test docstripper
+brew audit --strict Formula/docstripper.rb
 ```
