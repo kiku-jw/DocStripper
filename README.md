@@ -61,6 +61,12 @@ python tool.py --dry-run document.txt
 
 # Undo last operation
 python tool.py --undo
+ 
+# Pipe stdin to stdout (no file writes)
+cat input.pdf | python tool.py - --stdout > output.txt
+
+# Keep headers/footers if needed
+python tool.py --keep-headers input.pdf --stdout
 ```
 
 ---
@@ -115,6 +121,14 @@ More content.
 All Conservative features plus:
 - Merges broken lines (protects lists and tables)
 - Normalizes whitespace (protects tables)
+
+### CLI Flags (defaults ON)
+- `--no-merge-lines` — disable merging broken lines
+- `--no-dehyphenate` — disable de-hyphenation across line breaks
+- `--no-normalize-ws` — disable whitespace normalization
+- `--no-normalize-unicode` — disable Unicode punctuation normalization
+- `--keep-headers` — keep headers/footers/page numbers
+- `--stdout` — write cleaned text to stdout instead of modifying files (supports `-` for stdin)
 
 **Protection Features:**
 - ✅ Lists are never merged or broken

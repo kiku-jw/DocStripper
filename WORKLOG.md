@@ -12,4 +12,8 @@
 - Launched local server and opened UI at 127.0.0.1:8000
 - Prepared manual test plan (PDF/DOCX/TXT, ZIP, Copy, Clear list)
 
+2025-11-03T00:55:00Z — Documentation updates
+- README: added CLI stdin/stdout examples and new flags
+- Wiki Usage: documented flags and stdin/stdout example
+
 

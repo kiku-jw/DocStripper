@@ -68,6 +68,12 @@ Options:
   -h, --help     Show help message
   --dry-run      Preview changes without modifying files
   --undo         Restore files from last operation
+  --stdout       Write cleaned text to stdout (no file writes)
+  --keep-headers Keep headers/footers/page numbers
+  --no-merge-lines        Disable merging broken lines
+  --no-dehyphenate        Disable de-hyphenation across line breaks
+  --no-normalize-ws       Disable whitespace normalization
+  --no-normalize-unicode  Disable Unicode punctuation normalization
 ```
 
 ### Examples
@@ -90,6 +96,11 @@ python tool.py --dry-run important_document.txt
 #### Example 4: Undo last operation
 ```bash
 python tool.py --undo
+```
+
+#### Example 5: Use stdin/stdout
+```bash
+cat report.pdf | python tool.py - --stdout > report.txt
 ```
 
 ### Output
