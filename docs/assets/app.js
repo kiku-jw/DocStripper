@@ -1639,6 +1639,7 @@ class App {
         this.preserveParagraphSpacing = document.getElementById('preserveParagraphSpacing');
         this.mergeBrokenLines = document.getElementById('mergeBrokenLines');
         this.normalizeWhitespace = document.getElementById('normalizeWhitespace');
+        this.normalizeUnicode = document.getElementById('normalizeUnicode');
         this.keepTableSpacing = document.getElementById('keepTableSpacing');
         
         // Check if elements exist
@@ -1746,6 +1747,9 @@ class App {
                 if (settings.keepTableSpacing !== undefined && this.keepTableSpacing) {
                     this.keepTableSpacing.checked = settings.keepTableSpacing;
                 }
+                if (settings.normalizeUnicode !== undefined && this.normalizeUnicode) {
+                    this.normalizeUnicode.checked = settings.normalizeUnicode;
+                }
                 
                 // Update mode UI
                 this.updateModeUI();
@@ -1784,6 +1788,7 @@ class App {
                 dehyphenate: this.dehyphenate?.checked ?? true,
                 mergeBrokenLines: this.mergeBrokenLines?.checked ?? false,
                 normalizeWhitespace: this.normalizeWhitespace?.checked ?? false,
+                normalizeUnicode: this.normalizeUnicode?.checked ?? false,
                 keepTableSpacing: this.keepTableSpacing?.checked ?? true,
                 autoStartAfterUpload: this.autoStartAfterUpload?.checked ?? false,
             };
@@ -1815,8 +1820,8 @@ class App {
         const descriptions = [
             'Safe defaults, preserves formatting. Best for most documents.',
             'Balanced cleaning with line merging enabled.',
-            'Thorough cleaning with all optimizations enabled.',
-            'Maximum cleaning, removes more but may affect formatting.'
+            'Thorough cleaning with Unicode normalization. Preserves paragraph spacing.',
+            'Maximum cleaning with all optimizations. Removes paragraph spacing.'
         ];
         
         let labelIndex = 0;
@@ -1861,14 +1866,20 @@ class App {
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false;
                 break;
             case 'thorough':
-                // Enable merging and whitespace normalization
+                // Enable merging, whitespace normalization, and Unicode normalization
+                // Preserve paragraph spacing for better readability
                 if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
+                if (this.normalizeUnicode) this.normalizeUnicode.checked = true;
+                if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
                 break;
             case 'aggressive':
-                // All options enabled
+                // Maximum cleaning: all optimizations enabled
+                // Disable paragraph spacing preservation for more aggressive cleaning
                 if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
+                if (this.normalizeUnicode) this.normalizeUnicode.checked = true;
+                if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = false;
                 break;
         }
     }
@@ -2056,6 +2067,11 @@ class App {
         }
         if (this.normalizeWhitespace) {
             this.normalizeWhitespace.addEventListener('change', () => {
+                this.saveSettings();
+            });
+        }
+        if (this.normalizeUnicode) {
+            this.normalizeUnicode.addEventListener('change', () => {
                 this.saveSettings();
             });
         }
@@ -2273,6 +2289,7 @@ class App {
             dehyphenate: this.dehyphenate ? this.dehyphenate.checked : true,
             mergeBrokenLines: this.mergeBrokenLines ? this.mergeBrokenLines.checked : false,
             normalizeWhitespace: this.normalizeWhitespace ? this.normalizeWhitespace.checked : false,
+            normalizeUnicode: this.normalizeUnicode ? this.normalizeUnicode.checked : false,
             keepTableSpacing: this.keepTableSpacing ? this.keepTableSpacing.checked : true,
             cleaningModeType: this.cleaningModeType, // Pass mode type to SmartCleaner
         };

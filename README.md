@@ -54,8 +54,8 @@ docstripper document.txt
 
 **Option 2: Homebrew (macOS)**
 ```bash
-brew install --build-from-source docstripper.rb
-# Or create a tap (see INSTALL.md)
+brew tap kiku-jw/docstripper
+brew install docstripper
 docstripper document.txt
 ```
 
@@ -149,9 +149,12 @@ More content.
 **Thorough**
 - All Moderate features plus:
 - ✅ Normalizes whitespace (protects tables)
+- ✅ Normalizes Unicode punctuation (smart quotes, dashes)
+- ✅ Preserves paragraph spacing
 
 **Aggressive**
-- All Thorough features with maximum cleaning
+- All Thorough features plus:
+- ❌ Removes paragraph spacing (more compact output)
 
 ### CLI Flags (defaults ON)
 - `--no-merge-lines` — disable merging broken lines

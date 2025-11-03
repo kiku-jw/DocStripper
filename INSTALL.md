@@ -13,14 +13,14 @@ docstripper document.txt
 
 ## Homebrew Installation
 
-### Option 1: Install from Formula (when tap is created)
+**Recommended: Install from Tap**
 
 ```bash
 brew tap kiku-jw/docstripper
 brew install docstripper
 ```
 
-### Option 2: Install from Local Formula
+**Alternative: Install from Local Formula**
 
 ```bash
 brew install --build-from-source docstripper.rb
