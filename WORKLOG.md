@@ -46,4 +46,17 @@
 - Created INSTALL.md with installation instructions for all methods
 - All tests passing: 10/10 files tested successfully
 
+2025-11-03T04:00:00Z — UX Refinements & Homebrew Tap
+- Fixed cleaning temperament slider: now 4 distinct modes (step=33 instead of 25)
+- Differentiated Thorough vs Aggressive modes:
+  - Thorough: normalizeUnicode ON + preserveParagraphSpacing ON
+  - Aggressive: normalizeUnicode ON + preserveParagraphSpacing OFF
+- Added normalizeUnicode checkbox to advanced options (now 11 options total)
+- Added Gumroad support link (https://kiku0.gumroad.com/coffee) to:
+  - Floating support button (first position)
+  - Support snackbar after cleaning
+  - README support section
+- Created homebrew-docstripper repository and pushed formula
+- Updated app.js version to v39
+
 
