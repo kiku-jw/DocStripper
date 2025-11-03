@@ -128,20 +128,22 @@
                         
                         <!-- Cleaning Mode Selection -->
                         <div class="cleaning-mode-selector">
-                            <label class="mode-option">
-                                <input type="radio" name="cleaningMode" id="fastMode" value="fast" checked>
-                                <span class="mode-label">
-                                    <span class="mode-title">⚡ Fast Clean</span>
-                                    <span class="mode-desc">Rule-based cleaning (instant)</span>
-                                </span>
-                            </label>
-                            <label class="mode-option">
-                                <input type="radio" name="cleaningMode" id="smartMode" value="smart">
-                                <span class="mode-label">
-                                    <span class="mode-title">🤖 Smart Clean <span class="beta-badge">Beta</span></span>
-                                    <span class="mode-desc">AI-powered cleaning (on-device LLM)</span>
-                                </span>
-                            </label>
+                            <div class="mode-options-container">
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningMode" id="fastMode" value="fast" checked>
+                                    <span class="mode-label">
+                                        <span class="mode-title">⚡ Fast Clean</span>
+                                        <span class="mode-desc">Rule-based cleaning (instant)</span>
+                                    </span>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningMode" id="smartMode" value="smart">
+                                    <span class="mode-label">
+                                        <span class="mode-title">🤖 Smart Clean <span class="beta-badge">Beta</span></span>
+                                        <span class="mode-desc">AI-powered cleaning (on-device LLM)</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                         
                         <!-- Smart Mode Warning -->
