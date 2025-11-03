@@ -40,8 +40,20 @@ class DocStripper:
         r'^FOR\s+INTERNAL\s+USE$',
     ]
     
-    def __init__(self, dry_run: bool = False):
+    def __init__(self, dry_run: bool = False,
+                 merge_lines: bool = True,
+                 dehyphenate: bool = True,
+                 normalize_ws: bool = True,
+                 normalize_unicode: bool = True,
+                 remove_headers: bool = True,
+                 stdout: bool = False):
         self.dry_run = dry_run
+        self.merge_lines_opt = merge_lines
+        self.dehyphenate_opt = dehyphenate
+        self.normalize_ws_opt = normalize_ws
+        self.normalize_unicode_opt = normalize_unicode
+        self.remove_headers_opt = remove_headers
+        self.stdout_opt = stdout
         self.log_file = Path('.strip-log')
         self.stats = {
             'files_processed': 0,
@@ -455,13 +467,20 @@ class DocStripper:
         
         return normalized, replacements > 0
 
-    def clean_text(self, text: str, merge_lines: bool = False, normalize_ws: bool = False, normalize_unicode: bool = False) -> Tuple[str, dict]:
+    def clean_text(self, text: str,
+                   merge_lines: bool = False,
+                   normalize_ws: bool = False,
+                   normalize_unicode: bool = False,
+                   dehyphenate: bool = False,
+                   remove_headers: bool = True) -> Tuple[str, dict]:
         """Clean text by removing noise."""
         if not text:
             return "", {}
         
         # Apply dehyphenation first (before line-by-line processing)
-        text, dehyphenated_tokens = self.dehyphenate_text(text)
+        dehyphenated_tokens = 0
+        if dehyphenate:
+            text, dehyphenated_tokens = self.dehyphenate_text(text)
         
         # Apply merge broken lines (before whitespace normalization)
         text, merged_lines_count = self.merge_broken_lines(text, enabled=merge_lines)
@@ -487,8 +506,10 @@ class DocStripper:
         }
         
         # Detect repeating headers/footers across pages
-        page_boundaries = self.detect_pages(text)
-        repeating_headers_footers = self.detect_repeating_headers_footers(text, page_boundaries)
+        repeating_headers_footers = set()
+        if remove_headers:
+            page_boundaries = self.detect_pages(text)
+            repeating_headers_footers = self.detect_repeating_headers_footers(text, page_boundaries)
         
         for line in lines:
             original_line = line
@@ -505,17 +526,17 @@ class DocStripper:
                 continue
             
             # Skip page numbers
-            if self.is_page_number(stripped):
+            if remove_headers and self.is_page_number(stripped):
                 local_stats['header_footer_removed'] += 1
                 continue
             
             # Skip headers/footers
-            if self.is_header_footer(stripped):
+            if remove_headers and self.is_header_footer(stripped):
                 local_stats['header_footer_removed'] += 1
                 continue
             
             # Skip repeating headers/footers across pages
-            if stripped in repeating_headers_footers:
+            if remove_headers and stripped in repeating_headers_footers:
                 local_stats['repeating_headers_footers_removed'] += 1
                 continue
             
@@ -532,7 +553,7 @@ class DocStripper:
         
         return cleaned_text, local_stats
     
-    def process_file(self, file_path: Path) -> bool:
+    def process_file(self, file_path: Path, label: Optional[str] = None) -> bool:
         """Process a single file."""
         if not file_path.exists():
             print(f"Error: File not found: {file_path}", file=sys.stderr)
@@ -540,13 +561,33 @@ class DocStripper:
         
         print(f"Processing: {file_path}")
         
-        # Read text
-        text = self.read_text_file(file_path)
+        # Read text (support '-' as stdin)
+        if str(file_path) == '-':
+            try:
+                data = sys.stdin.buffer.read()
+                try:
+                    text = data.decode('utf-8')
+                except UnicodeDecodeError:
+                    text = data.decode('latin-1')
+            except Exception as e:
+                print(f"Error reading stdin: {e}", file=sys.stderr)
+                return False
+            if label is None:
+                label = 'stdin'
+        else:
+            text = self.read_text_file(file_path)
         if text is None:
             return False
         
         # Clean text
-        cleaned_text, stats = self.clean_text(text)
+        cleaned_text, stats = self.clean_text(
+            text,
+            merge_lines=self.merge_lines_opt,
+            normalize_ws=self.normalize_ws_opt,
+            normalize_unicode=self.normalize_unicode_opt,
+            dehyphenate=self.dehyphenate_opt,
+            remove_headers=self.remove_headers_opt,
+        )
         
         # Update global stats
         self.stats['files_processed'] += 1
@@ -573,7 +614,15 @@ class DocStripper:
                 print(f"  - Repeating headers/footers removed: {stats['repeating_headers_footers_removed']}")
         
         # Save original for undo
-        if not self.dry_run:
+        if self.stdout_opt:
+            # Print to stdout; if multiple files, add a separator
+            if label is None:
+                label = str(file_path)
+            # Print separator only if multiple inputs indicated by files_processed > 0
+            if self.stats['files_processed'] > 0:
+                print("\n---\n")
+            print(cleaned_text, end='' if cleaned_text.endswith('\n') else '\n')
+        elif not self.dry_run:
             backup_path = file_path.with_suffix(file_path.suffix + '.bak')
             try:
                 with open(file_path, 'rb') as src, open(backup_path, 'wb') as dst:
@@ -729,6 +778,14 @@ Examples:
         action='store_true',
         help='Restore files from last operation'
     )
+
+    # Cleaning options (defaults ON; use flags to disable)
+    parser.add_argument('--no-merge-lines', action='store_true', help='Disable merging of broken lines')
+    parser.add_argument('--no-dehyphenate', action='store_true', help='Disable de-hyphenation across line breaks')
+    parser.add_argument('--no-normalize-ws', action='store_true', help='Disable whitespace normalization')
+    parser.add_argument('--no-normalize-unicode', action='store_true', help='Disable Unicode punctuation normalization')
+    parser.add_argument('--keep-headers', action='store_true', help='Keep headers/footers/page numbers (do not remove)')
+    parser.add_argument('--stdout', action='store_true', help='Write cleaned text to stdout instead of modifying files')
     
     args = parser.parse_args()
     
@@ -737,13 +794,21 @@ Examples:
         success = undo_last_operation()
         sys.exit(0 if success else 1)
     
-    # Check for files
+    # Check for files or stdin
     if not args.files:
         parser.print_help()
         sys.exit(1)
     
     # Process files
-    stripper = DocStripper(dry_run=args.dry_run)
+    stripper = DocStripper(
+        dry_run=args.dry_run,
+        merge_lines=not args.no_merge_lines,
+        dehyphenate=not args.no_dehyphenate,
+        normalize_ws=not args.no_normalize_ws,
+        normalize_unicode=not args.no_normalize_unicode,
+        remove_headers=not args.keep_headers,
+        stdout=args.stdout,
+    )
     success_count = 0
     
     for file_pattern in args.files:
