@@ -14,6 +14,8 @@
 
 **🌐 [Try it online →](https://kiku-jw.github.io/DocStripper/)** — No installation needed!
 
+**📦 Latest Release:** [v2.1.0](https://github.com/kiku-jw/DocStripper/releases/tag/v2.1.0) — UX enhancements & distribution ready
+
 ---
 
 ## ✨ Features
@@ -21,11 +23,13 @@
 - ⚡ **Fast Clean** — Instant rule-based cleaning
 - 🤖 **Smart Clean (Beta)** — AI-powered cleaning with on-device LLM
 - 🎚️ **4 Cleaning Temperaments** — Gentle (safe), Moderate, Thorough, Aggressive
+- ⚙️ **WebWorker Processing** — Large files processed in background (no UI freezing)
 - 🔄 **Side-by-Side Preview** — Compare Original | Cleaned
 - 💾 **Settings Persistence** — Your preferences are saved automatically
-- 🔒 **100% Private** — All processing happens in your browser
+- 🔒 **100% Private** — All processing happens in your browser, works completely offline
+- 📡 **Works Offline Badge** — Visual indicator that everything stays on your device
 - 📊 **Real-time Statistics** — See exactly what was removed
-- 📥 **Download & Copy** — Download cleaned files or copy to clipboard
+- 📥 **Batch Download (ZIP)** — Download multiple cleaned files at once
 - 🎨 **Dark Theme** — Toggle between light and dark themes
 - 📱 **Mobile Responsive** — Works great on mobile devices
 
@@ -139,21 +143,25 @@ More content.
 - ✅ Empty lines
 - ✅ Punctuation-only lines (---, ***, ===)
 - ✅ Hyphenation fixed (auto-\nmatic → automatic)
+- ✅ Preserves paragraph spacing
 - ❌ Line merging disabled (preserves formatting)
 - ❌ Whitespace normalization disabled
+- ❌ Unicode normalization disabled
 
 **Moderate**
 - All Gentle features plus:
 - ✅ Merges broken lines (protects lists and tables)
+- ✅ Preserves paragraph spacing
 
 **Thorough**
 - All Moderate features plus:
 - ✅ Normalizes whitespace (protects tables)
-- ✅ Normalizes Unicode punctuation (smart quotes, dashes)
-- ✅ Preserves paragraph spacing
+- ✅ Normalizes Unicode punctuation (smart quotes, dashes → ASCII)
+- ✅ Preserves paragraph spacing (better readability)
 
 **Aggressive**
 - All Thorough features plus:
+- ✅ Normalizes Unicode punctuation
 - ❌ Removes paragraph spacing (more compact output)
 
 ### CLI Flags (defaults ON)
@@ -188,8 +196,22 @@ More content.
 
 ## 🔧 Requirements
 
+### Web App
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- No installation or dependencies required
+- Works completely offline after first load
+
+### CLI Tool
 - **Python 3.9+** (for CLI tool)
 - **PDF support** (optional): `pdftotext` from poppler-utils
+
+---
+
+## 📝 Changelog
+
+See [RELEASE_NOTES_v2.1.0.md](RELEASE_NOTES_v2.1.0.md) for the latest release notes.
+
+All releases: [GitHub Releases](https://github.com/kiku-jw/DocStripper/releases)
 
 ---
 
