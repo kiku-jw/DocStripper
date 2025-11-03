@@ -364,10 +364,14 @@ class DocStripper {
                 const prevEndsWithPunct = /[.!?]\s*$/.test(prevLine);
                 const nextIsList = i < lines.length - 1 && lines[i + 1].trim() && this.isListMarker(lines[i + 1]);
                 const currentIsList = currentLine.trim() && this.isListMarker(currentLine);
+                const prevIsHeader = this.isHeaderFooter(prevLine.trim()) || this.isPageNumber(prevLine.trim());
+                const currentIsHeader = this.isHeaderFooter(currentLine.trim()) || this.isPageNumber(currentLine.trim());
                 
                 if (!prevEndsWithPunct && 
                     !currentIsList && 
-                    !nextIsList) {
+                    !nextIsList &&
+                    !prevIsHeader &&
+                    !currentIsHeader) {
                     // Merge: remove newline, add space
                     mergedLines[mergedLines.length - 1] = prevLine.trimEnd() + ' ' + currentLine.trimStart();
                     linesMerged++;
@@ -1282,10 +1286,14 @@ Respond with JSON only:`;
                 const prevEndsWithPunct = /[.!?]\s*$/.test(prevLine);
                 const nextIsList = i < lines.length - 1 && lines[i + 1].trim() && this.isListMarker(lines[i + 1]);
                 const currentIsList = currentLine.trim() && this.isListMarker(currentLine);
+                const prevIsHeader = this.isHeaderFooter(prevLine.trim()) || this.isPageNumber(prevLine.trim());
+                const currentIsHeader = this.isHeaderFooter(currentLine.trim()) || this.isPageNumber(currentLine.trim());
                 
                 if (!prevEndsWithPunct && 
                     !currentIsList && 
-                    !nextIsList) {
+                    !nextIsList &&
+                    !prevIsHeader &&
+                    !currentIsHeader) {
                     // Merge: remove newline, add space
                     mergedLines[mergedLines.length - 1] = prevLine.trimEnd() + ' ' + currentLine.trimStart();
                     linesMerged++;
@@ -2324,10 +2332,18 @@ class App {
     displayResults(results, totalStats) {
         let html = '';
 
+        // Brief stats line
+        const briefStats = [];
+        if (totalStats.mergedLines > 0) briefStats.push(`Merged ${totalStats.mergedLines} lines`);
+        if (totalStats.dehyphenatedTokens > 0) briefStats.push(`Dehyphenated ${totalStats.dehyphenatedTokens} tokens`);
+        if (totalStats.repeatingHeadersFootersRemoved > 0) briefStats.push(`Removed ${totalStats.repeatingHeadersFootersRemoved} repeating headers/footers`);
+        const briefStatsLine = briefStats.length > 0 ? briefStats.join(', ') : null;
+
         // Statistics summary
         html += `
             <div class="stats-summary">
                 <h3>Summary Statistics</h3>
+                ${briefStatsLine ? `<p class="brief-stats" style="margin: 0.5rem 0; color: var(--text-light); font-size: 0.9rem;">${briefStatsLine}</p>` : ''}
                 <div class="stats-grid">
                     <div class="stat-item">
                         <span class="stat-value">${totalStats.filesProcessed}</span>

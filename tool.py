@@ -388,14 +388,17 @@ class DocStripper:
                 # 1. Previous line doesn't end with [.!?]
                 # 2. Current line doesn't start with list marker
                 # 3. Next line (if exists) doesn't start with list marker
+                # 4. Don't merge if previous or current line is a header/footer/page number
                 
                 prev_ends_with_punct = bool(re.search(r'[.!?]\s*$', prev_line))
                 next_is_list = (i < len(lines) - 1 and 
                                lines[i + 1].strip() and 
                                self.is_list_marker(lines[i + 1]))
                 current_is_list = current_line.strip() and self.is_list_marker(current_line)
+                prev_is_header = self.is_header_footer(prev_line.strip()) or self.is_page_number(prev_line.strip())
+                current_is_header = self.is_header_footer(current_line.strip()) or self.is_page_number(current_line.strip())
                 
-                if not prev_ends_with_punct and not current_is_list and not next_is_list:
+                if not prev_ends_with_punct and not current_is_list and not next_is_list and not prev_is_header and not current_is_header:
                     # Merge: remove newline, add space
                     merged_lines[-1] = prev_line.rstrip() + ' ' + current_line.lstrip()
                     lines_merged += 1

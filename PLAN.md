@@ -45,4 +45,24 @@ Execution Notes
 - Implement in small, testable steps; keep UI consistent between web and CLI
 - After each step, update WORKLOG.md and check in changes
 
+FINAL RELEASE SPRINT
+
+8. Release preparation (Critical)
+   8.1 Create git tag with version number
+   8.2 Write release notes highlighting Cleaning v1 improvements
+   8.3 Update Wiki/Home page with latest features
+
+9. Quality assurance (Critical)
+   9.1 Mini-QA: Test 5-10 real PDF/DOCX files (multi-page, multilingual)
+   9.2 Document any edge cases found
+   9.3 Fix critical issues if any
+
+10. Web stats enhancement (Useful)
+    10.1 Add brief statistics line in web results ("Merged X, Dehyphenated Y...")
+    10.2 Display in results summary section
+
+11. Final GitHub update
+    11.1 Push all changes
+    11.2 Create release on GitHub (if applicable)
+
 

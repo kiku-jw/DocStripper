@@ -20,4 +20,11 @@
 - Added generator script scripts/make_samples.py
 - Created TXT and DOCX samples in test_inputs/
 
+2025-11-03T01:30:00Z — Final release sprint
+- Fixed bug: headers/footers now protected from merging during line merge (CLI + web)
+- Added brief statistics line in web results ("Merged X, Dehyphenated Y...")
+- Created RELEASE_NOTES_v2.0.0.md with comprehensive changelog
+- Created docs/wiki/Home.md with v2.0 features overview
+- Updated app.js version to 35
+
 
