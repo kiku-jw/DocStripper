@@ -548,9 +548,12 @@ body {
 
 /* Cleaning Mode Selector */
 .cleaning-mode-selector {
+    margin-bottom: 1.5rem;
+}
+
+.mode-options-container {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }
 
@@ -1736,6 +1739,16 @@ html {
     .theme-toggle {
         width: 45px;
         height: 45px;
+    }
+    
+    .mode-options-container {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .mode-option {
+        min-width: 100%;
+        width: 100%;
     }
 }
 
