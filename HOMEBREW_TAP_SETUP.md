@@ -1,34 +1,16 @@
 # Homebrew Tap Setup Instructions
 
-## Quick Setup (Step-by-Step)
+## ✅ Tap Repository Created!
 
-### Step 1: Create Tap Repository on GitHub
+The Homebrew tap repository has been created at: **https://github.com/kiku-jw/homebrew-docstripper**
 
-1. Go to https://github.com/new
-2. Repository name: `homebrew-docstripper`
-3. Make it **public**
-4. **Don't** initialize with README, .gitignore, or license
-5. Click "Create repository"
+The formula is already set up and ready. However, you need to create a GitHub release tag before users can install it.
 
-### Step 2: Clone and Setup Locally
+## Next Steps
 
-```bash
-git clone https://github.com/kiku-jw/homebrew-docstripper.git
-cd homebrew-docstripper
-mkdir -p Formula
-```
+### Step 1: Create GitHub Release Tag
 
-### Step 3: Copy Formula
-
-```bash
-# From DocStripper repo root
-cp docstripper.rb Formula/docstripper.rb
-cd Formula
-```
-
-### Step 4: Create GitHub Release (if not exists)
-
-You need a tagged release for Homebrew. If you don't have v2.1.0 release yet:
+Before users can install via Homebrew, you need a tagged release:
 
 ```bash
 # In DocStripper repo
@@ -39,17 +21,11 @@ git push origin v2.1.0
 Then create a GitHub release at: https://github.com/kiku-jw/DocStripper/releases/new
 - Tag: v2.1.0
 - Title: v2.1.0
-- Description: (can be empty)
+- Description: (optional)
 
-### Step 5: Update Formula URL
+### Step 2: Update Formula with Release SHA256
 
-Edit `Formula/docstripper.rb` and update to point to the release:
-
-```ruby
-url "https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz"
-```
-
-### Step 6: Calculate SHA256 Hash
+After creating the release, you need to calculate the SHA256 hash and update the formula:
 
 ```bash
 # Download the release tarball
@@ -57,37 +33,41 @@ curl -L https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz -
 
 # Calculate hash
 shasum -a 256 docstripper.tar.gz
-# Copy the hash (first part before spaces)
+# Copy the hash (first part before spaces, without filename)
 ```
 
-Update the formula:
-```ruby
-sha256 "PASTE_HASH_HERE"
-```
-
-### Step 7: Commit and Push
+Then update the formula in the tap repository:
 
 ```bash
-cd ..  # Back to tap repo root
+# Clone the tap repo (if not already)
+git clone https://github.com/kiku-jw/homebrew-docstripper.git
+cd homebrew-docstripper
+
+# Edit Formula/docstripper.rb and update:
+# 1. URL should already be correct: url "https://github.com/kiku-jw/DocStripper/archive/refs/tags/v2.1.0.tar.gz"
+# 2. Update SHA256: sha256 "PASTE_HASH_HERE"
+
+# Commit and push
 git add Formula/docstripper.rb
-git commit -m "Add docstripper formula"
+git commit -m "Update formula with release SHA256"
 git push origin main
 ```
 
-### Step 8: Test Installation
+### Step 3: Test Installation
 
 ```bash
-# Test locally first
-brew install --build-from-source Formula/docstripper.rb
-
-# If successful, users can now install with:
+# Test locally
 brew tap kiku-jw/docstripper
 brew install docstripper
+
+# Verify it works
+docstripper --help
 ```
 
-### Step 9: Update INSTALL.md and README
+### Step 4: Users Can Now Install
 
-Update installation instructions to mention the tap:
+Once the release is created and SHA256 is updated, users can install with:
+
 ```bash
 brew tap kiku-jw/docstripper
 brew install docstripper
