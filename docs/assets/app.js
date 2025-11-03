@@ -2462,13 +2462,21 @@ class App {
             this.resultsContainer.parentElement.insertBefore(bulkContainer, this.resultsContainer);
         }
         
-        if (Array.isArray(results) && results.length > 1) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-primary';
-            btn.id = 'downloadAllBtn';
-            btn.textContent = `Download all (${results.length})`;
-            bulkContainer.appendChild(btn);
-            btn.addEventListener('click', () => this.downloadAll(results));
+        if (Array.isArray(results) && results.length > 0) {
+            if (results.length > 1) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary';
+                btn.id = 'downloadAllBtn';
+                btn.textContent = `Download all (${results.length})`;
+                bulkContainer.appendChild(btn);
+                btn.addEventListener('click', () => this.downloadAll(results));
+            }
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn btn-secondary';
+            clearBtn.id = 'clearAllBtn';
+            clearBtn.textContent = 'Clear list';
+            bulkContainer.appendChild(clearBtn);
+            clearBtn.addEventListener('click', () => this.clearAll());
         }
 
         // Setup download and copy buttons
@@ -2553,6 +2561,30 @@ class App {
             if (button) {
                 button.disabled = false;
             }
+        }
+    }
+
+    clearAll() {
+        try {
+            this.files = [];
+            this.results = [];
+            if (this.fileInput) {
+                this.fileInput.value = '';
+            }
+            if (this.fileList) {
+                this.fileList.innerHTML = '';
+            }
+            this.updateStartButton();
+            if (this.resultsSection) {
+                this.resultsSection.style.display = 'none';
+            }
+            const uploadSection = document.querySelector('.upload-section');
+            if (uploadSection) {
+                uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            this.showToast('Cleared uploaded files and results');
+        } catch (e) {
+            console.error('Clear all error:', e);
         }
     }
 
