@@ -1,0 +1,48 @@
+DocStripper Improvement Plan (Quality-focused, Minimalist)
+
+1. Repository audit and integration points
+   1.1 Identify CLI extraction/cleaning flow in `tool.py`
+   1.2 Identify Web extraction/cleaning flow in `docs/assets/app.js`
+   1.3 List shared cleaning rules to mirror across JS/Python
+
+2. Extraction robustness (foundation)
+   2.1 Web (PDF.js): verify worker setup, errors, scanned/empty PDF notice
+   2.2 CLI: verify PDF path (pdftotext or fallback), clean errors
+   2.3 Tests: minimal corpus to confirm successful extraction across formats
+
+3. Cleaning pipeline v1 (shared spec, two implementations)
+   3.1 Rules: single-newline merge when no sentence-ending punctuation
+   3.2 De-hyphenation across line breaks
+   3.3 Remove page numbers and “Page X” lines
+   3.4 Remove repeating headers/footers (simple heuristics)
+   3.5 Remove filler lines (rules/underscores, lone bullets), collapse spaces, trim
+   3.6 Preserve double newlines as paragraphs; avoid merging lists (bullets, 1.)
+
+4. UX consistency and options
+   4.1 Web: Advanced panel with toggles (defaults ON)
+   4.2 CLI: mirror flags and clear --help with examples
+   4.3 Counters: display brief stats of actions (removed/merged) in results
+
+5. Performance & large files
+   5.1 Web: page-wise processing to limit memory; responsive UI
+   5.2 CLI: streaming-friendly processing; avoid huge in-memory buffers
+
+6. Documentation & examples
+   6.1 README/Wiki: what gets cleaned; before/after snippets
+   6.2 Limitations (scanned PDFs, complex layouts, tables)
+   6.3 Release notes summary
+
+7. Optional refinements (only after core is stable)
+   7.1 Abbreviation exceptions for sentence merge (Dr., Mr., etc.)
+   7.2 Conservative/Aggressive presets mapping to toggles
+
+Constraints
+- Offline only; no heavy ML or cloud calls
+- Minimal dependencies; readable code; small, tested heuristics
+- Keep existing design/UX; do not expand scope beyond essentials
+
+Execution Notes
+- Implement in small, testable steps; keep UI consistent between web and CLI
+- After each step, update WORKLOG.md and check in changes
+
+
