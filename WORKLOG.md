@@ -16,4 +16,8 @@
 - README: added CLI stdin/stdout examples and new flags
 - Wiki Usage: documented flags and stdin/stdout example
 
+2025-11-03T01:00:00Z — Test inputs
+- Added generator script scripts/make_samples.py
+- Created TXT and DOCX samples in test_inputs/
+
 
