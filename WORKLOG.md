@@ -7,4 +7,9 @@
 - Added CLI flags to disable behaviors and --stdout support; stdin via '-'
 - Implemented simple self-test script and ran successfully
 
+2025-11-03T00:40:00Z — Web cleaning review & testing setup
+- Verified web cleaning pipeline and Advanced toggles in docs/assets/app.js
+- Launched local server and opened UI at 127.0.0.1:8000
+- Prepared manual test plan (PDF/DOCX/TXT, ZIP, Copy, Clear list)
+
 
