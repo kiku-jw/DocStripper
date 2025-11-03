@@ -80,6 +80,10 @@
     
     <!-- PDF.js for PDF text extraction -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- JSZip and FileSaver for ZIP downloads -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
     <header class="header">
@@ -271,7 +275,14 @@
                                 </label>
                             </div>
                         </details>
-                        <button class="btn btn-primary start-btn" id="startBtn" style="margin-top: 1.5rem; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; display: none;">
+                        <label class="setting-item" style="margin-top: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+                            <input type="checkbox" id="autoStartAfterUpload">
+                            <span class="setting-label">
+                                <span class="setting-title">Auto-start after upload</span>
+                                <span class="setting-desc">Automatically start cleaning when files are added</span>
+                            </span>
+                        </label>
+                        <button class="btn btn-primary start-btn" id="startBtn" style="margin-top: 0.5rem; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; display: none;">
                             🚀 Start Cleaning
                         </button>
                         <p class="mode-note" id="modeNote" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light); text-align: center;">

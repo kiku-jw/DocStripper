@@ -1518,8 +1518,11 @@ class App {
         this.resultsSection = document.getElementById('resultsSection');
         this.resultsContainer = document.getElementById('resultsContainer');
         
+        // Download All container will be inserted above results dynamically
+        
         // Start button
         this.startBtn = document.getElementById('startBtn');
+        this.autoStartAfterUpload = document.getElementById('autoStartAfterUpload');
         
         // Mode selection
         this.fastMode = document.getElementById('fastMode');
@@ -1612,6 +1615,11 @@ class App {
                     }
                 }
                 
+                // Restore auto-start
+                if (settings.autoStartAfterUpload !== undefined && this.autoStartAfterUpload) {
+                    this.autoStartAfterUpload.checked = !!settings.autoStartAfterUpload;
+                }
+                
                 // Restore checkbox states
                 if (settings.removeEmptyLines !== undefined && this.removeEmptyLines) {
                     this.removeEmptyLines.checked = settings.removeEmptyLines;
@@ -1673,6 +1681,7 @@ class App {
                 mergeBrokenLines: this.mergeBrokenLines?.checked ?? false,
                 normalizeWhitespace: this.normalizeWhitespace?.checked ?? false,
                 keepTableSpacing: this.keepTableSpacing?.checked ?? true,
+                autoStartAfterUpload: this.autoStartAfterUpload?.checked ?? false,
             };
             localStorage.setItem('docstripper_settings', JSON.stringify(settings));
         } catch (e) {
@@ -1871,6 +1880,11 @@ class App {
                 this.saveSettings();
             });
         }
+        if (this.autoStartAfterUpload) {
+            this.autoStartAfterUpload.addEventListener('change', () => {
+                this.saveSettings();
+            });
+        }
         
         // Mode type selection handlers (Conservative/Aggressive)
         if (this.conservativeMode) {
@@ -2001,6 +2015,15 @@ class App {
                 }
             }
         }, 100);
+        
+        // Auto-start if enabled
+        if (this.autoStartAfterUpload && this.autoStartAfterUpload.checked && this.startBtn) {
+            setTimeout(() => {
+                if (this.files.length > 0) {
+                    this.startBtn.click();
+                }
+            }, 150);
+        }
     }
 
     updateStartButton() {
@@ -2418,6 +2441,27 @@ class App {
         });
 
         this.resultsContainer.innerHTML = html;
+        
+        // Inject or update Download All container if multiple files
+        const parent = this.resultsContainer.parentElement;
+        if (parent) {
+            let bulkContainer = document.getElementById('downloadAllContainer');
+            if (!bulkContainer) {
+                bulkContainer = document.createElement('div');
+                bulkContainer.id = 'downloadAllContainer';
+                bulkContainer.className = 'result-actions';
+                parent.insertBefore(bulkContainer, this.resultsContainer);
+            }
+            bulkContainer.innerHTML = '';
+            if (Array.isArray(results) && results.length > 1) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary';
+                btn.id = 'downloadAllBtn';
+                btn.textContent = `Download all (${results.length})`;
+                bulkContainer.appendChild(btn);
+                btn.addEventListener('click', () => this.downloadAll(results));
+            }
+        }
 
         // Setup download and copy buttons
         document.querySelectorAll('.download-btn').forEach(btn => {
@@ -2468,6 +2512,39 @@ class App {
         } catch (error) {
             console.error('Download error:', error);
             this.showToast('Failed to download file', 'error');
+        }
+    }
+
+    async downloadAll(results) {
+        if (!Array.isArray(results) || results.length < 2) return;
+        try {
+            const button = document.getElementById('downloadAllBtn');
+            if (button) {
+                button.disabled = true;
+            }
+            this.showToast('Creating ZIP…');
+            const zip = new JSZip();
+            results.forEach((r, i) => {
+                const base = (r.fileName || `document_${i + 1}`).replace(/\.[^.]+$/, '');
+                zip.file(`${base}_cleaned.txt`, r.cleanedText || '');
+            });
+            const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+                const percent = Math.round(metadata.percent || 0);
+                if (percent % 10 === 0) {
+                    this.showToast(`Creating ZIP… ${percent}%`);
+                }
+            });
+            const name = `docstripper_${results.length}_files.zip`;
+            saveAs(blob, name);
+            this.showToast(`Downloaded: ${name}`);
+        } catch (e) {
+            console.error('ZIP error:', e);
+            this.showToast('Failed to create ZIP', 'error');
+        } finally {
+            const button = document.getElementById('downloadAllBtn');
+            if (button) {
+                button.disabled = false;
+            }
         }
     }
 
