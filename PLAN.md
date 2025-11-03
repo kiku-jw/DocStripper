@@ -67,4 +67,31 @@ FINAL RELEASE SPRINT
 
 RELEASE COMPLETE - v2.0.0 tagged and pushed
 
+---
+
+## UX ENHANCEMENTS SPRINT (v2.1.0)
+
+12. Human-readable cleaning temperament slider ✅
+    12.1 Replace Conservative/Aggressive radio buttons with range slider (Gentle to Aggressive) ✅
+    12.2 Add visual feedback and tooltips for slider positions ✅
+    12.3 Map slider values to existing cleaning mode logic ✅
+
+13. Onboarding and trust signals ✅
+    13.1 Add first-visit tooltip about privacy (offline, nothing sent) ✅
+    13.2 Add "Works Offline" badge in corner ✅
+    13.3 Enhance persistent settings with restoration notification ✅
+
+14. Performance and feedback ✅
+    14.1 Implement WebWorker for cleaning (prevent UI freezing) ✅
+    14.2 Add ZIP download feedback notification ✅
+    14.3 Add support snackbar after cleaning completion ✅
+
+15. Distribution and tooling
+    15.1 Prepare CLI for Homebrew formula
+    15.2 Prepare CLI for PyPI package
+    15.3 Improve self-test script for release validation
+
+16. Analytics (privacy-friendly) ✅
+    16.1 Add Plausible or Umami analytics (1 line, no cookies) ✅
+
 

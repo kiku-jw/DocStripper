@@ -28,4 +28,15 @@
 - Updated app.js version to 35
 - Created GitHub release v2.0.0: https://github.com/kiku-jw/DocStripper/releases/tag/v2.0.0
 
+2025-11-03T02:30:00Z — UX Enhancements Sprint (v2.1.0)
+- Replaced Conservative/Aggressive radio buttons with human-readable cleaning temperament slider (Gentle to Aggressive)
+- Added onboarding tooltip on first visit about privacy (offline, nothing sent)
+- Added "Works Offline" badge in header corner
+- Enhanced ZIP download feedback: shows success message with file count
+- Added persistent settings restoration notification (shows when previous settings are loaded)
+- Added support snackbar after cleaning completion (one-time per session, "Saved you some time? Buy a coffee")
+- Implemented WebWorker for cleaning (prevents UI freezing on long PDFs/files >100KB or >5000 lines)
+- Added privacy-friendly analytics (Plausible.io, no cookies)
+- Updated app.js version to 38
+
 

@@ -84,6 +84,9 @@
     <!-- JSZip and FileSaver for ZIP downloads -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
+    <!-- Privacy-friendly analytics (Plausible) -->
+    <script defer data-domain="kiku-jw.github.io" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
     <header class="header">
@@ -94,6 +97,10 @@
                     <p class="tagline">Batch document cleaner — Remove noise from text documents automatically</p>
                 </div>
                 <div class="header-controls">
+                    <div class="offline-badge" title="Works completely offline - your files never leave your device">
+                        <span class="offline-icon">📡</span>
+                        <span class="offline-text">Works Offline</span>
+                    </div>
                     <div id="google_translate_element" class="translate-widget"></div>
                     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                         <span class="theme-icon">🌙</span>
@@ -112,6 +119,18 @@
                     <p class="upload-description">
                         Drop your files here or click to browse. All processing happens in your browser — your files never leave your computer!
                     </p>
+                    
+                    <!-- First-visit privacy tooltip -->
+                    <div class="onboarding-tooltip" id="onboardingTooltip" style="display: none;">
+                        <div class="tooltip-content">
+                            <div class="tooltip-icon">🔒</div>
+                            <div class="tooltip-text">
+                                <strong>100% Private</strong> — Everything works offline, nothing is sent to any server. Your files stay on your device.
+                            </div>
+                            <button class="tooltip-close" id="closeTooltip" aria-label="Close">×</button>
+                        </div>
+                        <div class="tooltip-arrow"></div>
+                    </div>
                     
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-content">
@@ -175,24 +194,23 @@
                             <button class="btn btn-secondary cancel-btn" id="cancelBtn" style="display: none;">Cancel</button>
                         </div>
                         
-                        <!-- Cleaning Mode Selector: Conservative vs Aggressive -->
-                        <div class="cleaning-mode-selector" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Cleaning Mode:</label>
-                            <div class="mode-options-container">
-                                <label class="mode-option">
-                                    <input type="radio" name="cleaningModeType" id="conservativeMode" value="conservative" checked>
-                                    <span class="mode-label">
-                                        <span class="mode-title">🛡️ Conservative</span>
-                                        <span class="mode-desc">Safe defaults (recommended)</span>
-                                    </span>
-                                </label>
-                                <label class="mode-option">
-                                    <input type="radio" name="cleaningModeType" id="aggressiveMode" value="aggressive">
-                                    <span class="mode-label">
-                                        <span class="mode-title">⚡ Aggressive</span>
-                                        <span class="mode-desc">More aggressive cleaning</span>
-                                    </span>
-                                </label>
+                        <!-- Cleaning Temperament Slider -->
+                        <div class="cleaning-temperament-selector" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                Cleaning Temperament:
+                                <span id="temperamentLabel" style="font-weight: 400; color: var(--text-light); margin-left: 0.5rem;">Gentle (recommended)</span>
+                            </label>
+                            <div class="temperament-slider-container">
+                                <input type="range" id="cleaningTemperament" min="0" max="100" value="0" step="25" class="temperament-slider">
+                                <div class="temperament-labels">
+                                    <span class="temperament-label">Gentle</span>
+                                    <span class="temperament-label">Moderate</span>
+                                    <span class="temperament-label">Thorough</span>
+                                    <span class="temperament-label">Aggressive</span>
+                                </div>
+                                <div class="temperament-description" id="temperamentDescription">
+                                    Safe defaults, preserves formatting. Best for most documents.
+                                </div>
                             </div>
                         </div>
                         
@@ -523,6 +541,6 @@ Empty line above.</code></pre>
         </div>
     </div>
 
-    <script src="assets/app.js?v=35"></script>
+    <script src="assets/app.js?v=38"></script>
 </body>
 </html>

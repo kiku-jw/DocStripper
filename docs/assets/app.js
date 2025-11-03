@@ -1514,9 +1514,89 @@ class App {
         this.results = [];
         this.cleaningMode = 'fast'; // 'fast' or 'smart'
         this.cleaningModeType = 'conservative'; // 'conservative' or 'aggressive'
+        this.worker = null;
         this.initializeElements();
         this.loadSettings(); // Load saved settings from localStorage
         this.setupEventListeners();
+        this.checkOnboardingTooltip(); // Show onboarding tooltip on first visit
+    }
+    
+    async initializeWorker() {
+        if (this.worker) return this.worker;
+        
+        try {
+            this.worker = new Worker('assets/cleaner.worker.js');
+            return this.worker;
+        } catch (error) {
+            console.warn('Failed to initialize WebWorker, falling back to main thread:', error);
+            return null;
+        }
+    }
+    
+    async cleanTextInWorker(text, options) {
+        const worker = await this.initializeWorker();
+        if (!worker) {
+            // Fallback to main thread
+            const stripper = new DocStripper(options);
+            return stripper.cleanText(text);
+        }
+        
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Worker timeout'));
+            }, 60000);
+            
+            const handler = (e) => {
+                clearTimeout(timeout);
+                worker.removeEventListener('message', handler);
+                if (e.data.success) {
+                    resolve(e.data.result);
+                } else {
+                    reject(new Error(e.data.error || 'Worker error'));
+                }
+            };
+            
+            worker.addEventListener('message', handler);
+            worker.postMessage({ text, options });
+        });
+    }
+    
+    checkOnboardingTooltip() {
+        const tooltip = document.getElementById('onboardingTooltip');
+        const closeBtn = document.getElementById('closeTooltip');
+        
+        if (!tooltip) return;
+        
+        // Check if user has seen the tooltip before
+        const hasSeenTooltip = localStorage.getItem('docstripper_onboarding_seen');
+        
+        if (!hasSeenTooltip) {
+            // Show tooltip after a short delay for better UX
+            setTimeout(() => {
+                tooltip.style.display = 'block';
+            }, 500);
+        }
+        
+        // Close button handler
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                tooltip.style.display = 'none';
+                localStorage.setItem('docstripper_onboarding_seen', 'true');
+            });
+        }
+        
+        // Also close on clicking outside (optional, can be removed if too aggressive)
+        document.addEventListener('click', (e) => {
+            if (tooltip.style.display === 'block' && 
+                !tooltip.contains(e.target) && 
+                e.target !== closeBtn) {
+                // Only close if clicking far from tooltip (not on upload area)
+                if (!e.target.closest('#uploadArea')) {
+                    tooltip.style.display = 'none';
+                    localStorage.setItem('docstripper_onboarding_seen', 'true');
+                }
+            }
+        }, { once: false });
     }
 
     initializeElements() {
@@ -1542,9 +1622,10 @@ class App {
         this.cancelBtn = document.getElementById('cancelBtn');
         this.modeNote = document.getElementById('modeNote');
         
-        // Cleaning mode type (Conservative/Aggressive)
-        this.conservativeMode = document.getElementById('conservativeMode');
-        this.aggressiveMode = document.getElementById('aggressiveMode');
+        // Cleaning temperament slider
+        this.cleaningTemperament = document.getElementById('cleaningTemperament');
+        this.temperamentLabel = document.getElementById('temperamentLabel');
+        this.temperamentDescription = document.getElementById('temperamentDescription');
         
         // Settings checkboxes
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
@@ -1599,15 +1680,19 @@ class App {
             if (saved) {
                 const settings = JSON.parse(saved);
                 
-                // Restore cleaning mode type
-                if (settings.cleaningModeType) {
-                    this.cleaningModeType = settings.cleaningModeType;
-                    if (this.conservativeMode && this.aggressiveMode) {
-                        if (settings.cleaningModeType === 'aggressive') {
-                            this.aggressiveMode.checked = true;
-                        } else {
-                            this.conservativeMode.checked = true;
-                        }
+                // Restore cleaning temperament (backward compatibility: support old cleaningModeType)
+                if (settings.cleaningTemperament !== undefined) {
+                    const value = parseInt(settings.cleaningTemperament);
+                    if (this.cleaningTemperament) {
+                        this.cleaningTemperament.value = value;
+                        this.updateTemperamentFromValue(value);
+                    }
+                } else if (settings.cleaningModeType) {
+                    // Backward compatibility: convert old conservative/aggressive to slider value
+                    const value = settings.cleaningModeType === 'aggressive' ? 75 : 0;
+                    if (this.cleaningTemperament) {
+                        this.cleaningTemperament.value = value;
+                        this.updateTemperamentFromValue(value);
                     }
                 }
                 
@@ -1663,6 +1748,15 @@ class App {
                 
                 // Update mode UI
                 this.updateModeUI();
+                
+                // Show restoration notification if settings were loaded
+                const hasShownRestoreNotification = sessionStorage.getItem('docstripper_restore_shown');
+                if (!hasShownRestoreNotification) {
+                    setTimeout(() => {
+                        this.showToast('✅ Previous settings restored', 'success', 2500);
+                        sessionStorage.setItem('docstripper_restore_shown', 'true');
+                    }, 800);
+                }
             } else {
                 // Apply default Conservative mode settings
                 this.applyModeDefaults();
@@ -1676,6 +1770,7 @@ class App {
     saveSettings() {
         try {
             const settings = {
+                cleaningTemperament: this.cleaningTemperament ? parseInt(this.cleaningTemperament.value) : 0,
                 cleaningModeType: this.cleaningModeType,
                 cleaningMode: this.cleaningMode,
                 removeEmptyLines: this.removeEmptyLines?.checked ?? true,
@@ -1695,6 +1790,50 @@ class App {
         } catch (e) {
             console.error('Failed to save settings:', e);
         }
+    }
+    
+    updateTemperamentFromValue(value) {
+        // Map slider value (0-100) to cleaning mode type and update UI
+        if (value <= 50) {
+            this.cleaningModeType = 'conservative';
+        } else {
+            this.cleaningModeType = 'aggressive';
+        }
+        
+        // Update label and description
+        const labels = ['Gentle', 'Moderate', 'Thorough', 'Aggressive'];
+        const descriptions = [
+            'Safe defaults, preserves formatting. Best for most documents.',
+            'Balanced cleaning with moderate formatting preservation.',
+            'Thorough cleaning while still protecting important structure.',
+            'Maximum cleaning, removes more but may affect formatting.'
+        ];
+        
+        let labelIndex = 0;
+        let descriptionIndex = 0;
+        if (value <= 25) {
+            labelIndex = 0;
+            descriptionIndex = 0;
+        } else if (value <= 50) {
+            labelIndex = 1;
+            descriptionIndex = 1;
+        } else if (value <= 75) {
+            labelIndex = 2;
+            descriptionIndex = 2;
+        } else {
+            labelIndex = 3;
+            descriptionIndex = 3;
+        }
+        
+        if (this.temperamentLabel) {
+            const recommended = labelIndex === 0 ? ' (recommended)' : '';
+            this.temperamentLabel.textContent = labels[labelIndex] + recommended;
+        }
+        if (this.temperamentDescription) {
+            this.temperamentDescription.textContent = descriptions[descriptionIndex];
+        }
+        
+        this.applyModeDefaults();
     }
     
     applyModeDefaults() {
@@ -1894,23 +2033,16 @@ class App {
             });
         }
         
-        // Mode type selection handlers (Conservative/Aggressive)
-        if (this.conservativeMode) {
-            this.conservativeMode.addEventListener('change', () => {
-                if (this.conservativeMode.checked) {
-                    this.cleaningModeType = 'conservative';
-                    this.applyModeDefaults();
-                    this.saveSettings();
-                }
-            });
-        }
-        if (this.aggressiveMode) {
-            this.aggressiveMode.addEventListener('change', () => {
-                if (this.aggressiveMode.checked) {
-                    this.cleaningModeType = 'aggressive';
-                    this.applyModeDefaults();
-                    this.saveSettings();
-                }
+        // Temperament slider handler
+        if (this.cleaningTemperament) {
+            // Initialize on load
+            const initialValue = parseInt(this.cleaningTemperament.value);
+            this.updateTemperamentFromValue(initialValue);
+            
+            this.cleaningTemperament.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                this.updateTemperamentFromValue(value);
+                this.saveSettings();
             });
         }
         
@@ -2165,10 +2297,34 @@ class App {
                         }
                     }
                 } else {
-                    // Use Fast Cleaner
-                    result = await this.stripper.processFile(file);
-                    if (result.success) {
-                        result.mode = 'fast';
+                    // Fast Clean mode - use worker for large files (>100KB or >5000 lines)
+                    const text = await this.stripper.readTextFile(file);
+                    const useWorker = text.length > 100 * 1024 || text.split('\n').length > 5000;
+                    
+                    if (useWorker) {
+                        try {
+                            const cleanedResult = await this.cleanTextInWorker(text, settings);
+                            result = {
+                                fileName: file.name,
+                                originalText: text,
+                                cleanedText: cleanedResult.text,
+                                stats: cleanedResult.stats,
+                                success: true,
+                                mode: 'fast'
+                            };
+                        } catch (workerError) {
+                            console.warn('Worker failed, falling back to main thread:', workerError);
+                            result = await this.stripper.processFile(file);
+                            if (result.success) {
+                                result.mode = 'fast';
+                            }
+                        }
+                    } else {
+                        // Small files - use main thread (faster for small files)
+                        result = await this.stripper.processFile(file);
+                        if (result.success) {
+                            result.mode = 'fast';
+                        }
                     }
                 }
                 
@@ -2513,6 +2669,44 @@ class App {
                 }
             });
         });
+        
+        // Show support snackbar after displaying results (once per session)
+        this.showSupportSnackbar();
+    }
+    
+    showSupportSnackbar() {
+        const hasShownSupport = sessionStorage.getItem('docstripper_support_shown');
+        if (hasShownSupport) return;
+        
+        setTimeout(() => {
+            const snackbar = document.createElement('div');
+            snackbar.className = 'support-snackbar';
+            snackbar.innerHTML = `
+                <div class="snackbar-content">
+                    <span class="snackbar-text">Saved you some time? ☕ <a href="https://buymeacoffee.com/kiku" target="_blank" rel="noopener">Buy a coffee</a></span>
+                    <button class="snackbar-close" aria-label="Close">×</button>
+                </div>
+            `;
+            document.body.appendChild(snackbar);
+            
+            setTimeout(() => snackbar.classList.add('show'), 100);
+            
+            const closeBtn = snackbar.querySelector('.snackbar-close');
+            closeBtn.addEventListener('click', () => {
+                snackbar.classList.remove('show');
+                setTimeout(() => snackbar.remove(), 300);
+                sessionStorage.setItem('docstripper_support_shown', 'true');
+            });
+            
+            // Auto-hide after 8 seconds
+            setTimeout(() => {
+                if (snackbar.parentElement) {
+                    snackbar.classList.remove('show');
+                    setTimeout(() => snackbar.remove(), 300);
+                    sessionStorage.setItem('docstripper_support_shown', 'true');
+                }
+            }, 8000);
+        }, 2000);
     }
 
     downloadFile(result) {
@@ -2568,7 +2762,7 @@ class App {
             });
             const name = `docstripper_${results.length}_files.zip`;
             saveAs(blob, name);
-            this.showToast(`Downloaded: ${name}`);
+            this.showToast(`✅ ${results.length} files cleaned and downloaded`, 'success', 4000);
         } catch (e) {
             console.error('ZIP error:', e);
             this.showToast('Failed to create ZIP', 'error');
@@ -2613,7 +2807,7 @@ class App {
         });
     }
 
-    showToast(message, type = 'success') {
+    showToast(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.textContent = message;
@@ -2623,7 +2817,7 @@ class App {
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        }, duration);
     }
 
     formatFileSize(bytes) {
