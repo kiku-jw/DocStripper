@@ -26,5 +26,6 @@
 - Created RELEASE_NOTES_v2.0.0.md with comprehensive changelog
 - Created docs/wiki/Home.md with v2.0 features overview
 - Updated app.js version to 35
+- Created GitHub release v2.0.0: https://github.com/kiku-jw/DocStripper/releases/tag/v2.0.0
 
 
