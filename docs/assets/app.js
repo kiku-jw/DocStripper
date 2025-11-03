@@ -2720,7 +2720,7 @@ class App {
             snackbar.className = 'support-snackbar';
             snackbar.innerHTML = `
                 <div class="snackbar-content">
-                    <span class="snackbar-text">Saved you some time? ☕ <a href="https://buymeacoffee.com/kiku" target="_blank" rel="noopener">Buy a coffee</a></span>
+                    <span class="snackbar-text">Saved you some time? ☕ <a href="https://kiku0.gumroad.com/coffee" target="_blank" rel="noopener">Support on Gumroad</a></span>
                     <button class="snackbar-close" aria-label="Close">×</button>
                 </div>
             `;
