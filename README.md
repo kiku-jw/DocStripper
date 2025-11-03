@@ -20,8 +20,7 @@
 
 - ⚡ **Fast Clean** — Instant rule-based cleaning
 - 🤖 **Smart Clean (Beta)** — AI-powered cleaning with on-device LLM
-- 🛡️ **Conservative Mode** — Safe defaults (recommended)
-- ⚡ **Aggressive Mode** — More aggressive cleaning
+- 🎚️ **4 Cleaning Temperaments** — Gentle (safe), Moderate, Thorough, Aggressive
 - 🔄 **Side-by-Side Preview** — Compare Original | Cleaned
 - 💾 **Settings Persistence** — Your preferences are saved automatically
 - 🔒 **100% Private** — All processing happens in your browser
@@ -39,17 +38,39 @@
 1. Visit [https://kiku-jw.github.io/DocStripper/](https://kiku-jw.github.io/DocStripper/)
 2. Upload your files
 3. Choose **Fast Clean** (instant) or **Smart Clean** (AI-powered)
-4. Select **Conservative** (safe) or **Aggressive** (more thorough)
+4. Adjust **Cleaning Temperament** slider: Gentle (recommended), Moderate, Thorough, or Aggressive
 5. Click "Start Cleaning"
 6. Download or copy the cleaned results
 
 ### CLI Tool
 
+#### Installation Options
+
+**Option 1: PyPI (Recommended)**
 ```bash
-# Install
+pip install docstripper
+docstripper document.txt
+```
+
+**Option 2: Homebrew (macOS)**
+```bash
+brew install --build-from-source docstripper.rb
+# Or create a tap (see INSTALL.md)
+docstripper document.txt
+```
+
+**Option 3: Manual Installation**
+```bash
 git clone https://github.com/kiku-jw/DocStripper.git
 cd DocStripper
+python tool.py document.txt
+```
 
+See [INSTALL.md](INSTALL.md) for detailed installation instructions.
+
+#### Usage
+
+```bash
 # Clean a file
 python tool.py document.txt
 
@@ -88,7 +109,7 @@ Important content here.
 3
 ```
 
-**After (Conservative Mode):**
+**After (Gentle Mode):**
 ```
 Executive Summary
 This is automatic text processing.
@@ -108,19 +129,29 @@ More content.
 
 ## 🎨 What Gets Removed?
 
-### Conservative Mode (Default - Recommended)
-- Page numbers (1, 2, 3...)
-- Headers/footers ("Page X of Y", "Confidential", etc.)
-- Repeating headers/footers across pages
-- Duplicate lines
-- Empty lines
-- Punctuation-only lines (---, ***, ===)
-- Hyphenation fixed (auto-\nmatic → automatic)
+### Cleaning Temperaments
 
-### Aggressive Mode
-All Conservative features plus:
-- Merges broken lines (protects lists and tables)
-- Normalizes whitespace (protects tables)
+**Gentle (Recommended - Default)**
+- ✅ Page numbers (1, 2, 3...)
+- ✅ Headers/footers ("Page X of Y", "Confidential", etc.)
+- ✅ Repeating headers/footers across pages
+- ✅ Duplicate lines
+- ✅ Empty lines
+- ✅ Punctuation-only lines (---, ***, ===)
+- ✅ Hyphenation fixed (auto-\nmatic → automatic)
+- ❌ Line merging disabled (preserves formatting)
+- ❌ Whitespace normalization disabled
+
+**Moderate**
+- All Gentle features plus:
+- ✅ Merges broken lines (protects lists and tables)
+
+**Thorough**
+- All Moderate features plus:
+- ✅ Normalizes whitespace (protects tables)
+
+**Aggressive**
+- All Thorough features with maximum cleaning
 
 ### CLI Flags (defaults ON)
 - `--no-merge-lines` — disable merging broken lines

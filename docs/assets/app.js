@@ -1514,6 +1514,7 @@ class App {
         this.results = [];
         this.cleaningMode = 'fast'; // 'fast' or 'smart'
         this.cleaningModeType = 'conservative'; // 'conservative' or 'aggressive'
+        this.cleaningTemperamentMode = 'gentle'; // 'gentle', 'moderate', 'thorough', 'aggressive'
         this.worker = null;
         this.initializeElements();
         this.loadSettings(); // Load saved settings from localStorage
@@ -1689,7 +1690,7 @@ class App {
                     }
                 } else if (settings.cleaningModeType) {
                     // Backward compatibility: convert old conservative/aggressive to slider value
-                    const value = settings.cleaningModeType === 'aggressive' ? 75 : 0;
+                    const value = settings.cleaningModeType === 'aggressive' ? 100 : 0;
                     if (this.cleaningTemperament) {
                         this.cleaningTemperament.value = value;
                         this.updateTemperamentFromValue(value);
@@ -1758,12 +1759,12 @@ class App {
                     }, 800);
                 }
             } else {
-                // Apply default Conservative mode settings
-                this.applyModeDefaults();
+                // Apply default Gentle mode settings
+                this.applyTemperamentDefaults('gentle');
             }
         } catch (e) {
             console.error('Failed to load settings:', e);
-            this.applyModeDefaults();
+            this.applyTemperamentDefaults('gentle');
         }
     }
     
@@ -1793,47 +1794,83 @@ class App {
     }
     
     updateTemperamentFromValue(value) {
-        // Map slider value (0-100) to cleaning mode type and update UI
-        if (value <= 50) {
-            this.cleaningModeType = 'conservative';
+        // Map slider value to one of 4 modes (0, 33, 66, 100)
+        let mode = 'gentle';
+        if (value >= 0 && value < 33) {
+            mode = 'gentle';
+        } else if (value >= 33 && value < 66) {
+            mode = 'moderate';
+        } else if (value >= 66 && value < 100) {
+            mode = 'thorough';
         } else {
-            this.cleaningModeType = 'aggressive';
+            mode = 'aggressive';
         }
+        
+        // Map to cleaning mode type for compatibility
+        this.cleaningModeType = (mode === 'aggressive' || mode === 'thorough') ? 'aggressive' : 'conservative';
+        this.cleaningTemperamentMode = mode;
         
         // Update label and description
         const labels = ['Gentle', 'Moderate', 'Thorough', 'Aggressive'];
         const descriptions = [
             'Safe defaults, preserves formatting. Best for most documents.',
-            'Balanced cleaning with moderate formatting preservation.',
-            'Thorough cleaning while still protecting important structure.',
+            'Balanced cleaning with line merging enabled.',
+            'Thorough cleaning with all optimizations enabled.',
             'Maximum cleaning, removes more but may affect formatting.'
         ];
         
         let labelIndex = 0;
-        let descriptionIndex = 0;
-        if (value <= 25) {
-            labelIndex = 0;
-            descriptionIndex = 0;
-        } else if (value <= 50) {
-            labelIndex = 1;
-            descriptionIndex = 1;
-        } else if (value <= 75) {
-            labelIndex = 2;
-            descriptionIndex = 2;
-        } else {
-            labelIndex = 3;
-            descriptionIndex = 3;
-        }
+        if (mode === 'gentle') labelIndex = 0;
+        else if (mode === 'moderate') labelIndex = 1;
+        else if (mode === 'thorough') labelIndex = 2;
+        else labelIndex = 3;
         
         if (this.temperamentLabel) {
             const recommended = labelIndex === 0 ? ' (recommended)' : '';
             this.temperamentLabel.textContent = labels[labelIndex] + recommended;
         }
         if (this.temperamentDescription) {
-            this.temperamentDescription.textContent = descriptions[descriptionIndex];
+            this.temperamentDescription.textContent = descriptions[labelIndex];
         }
         
-        this.applyModeDefaults();
+        this.applyTemperamentDefaults(mode);
+    }
+    
+    applyTemperamentDefaults(mode) {
+        // Apply defaults based on temperament mode
+        // Base options (always ON)
+        if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
+        if (this.removePageNumbers) this.removePageNumbers.checked = true;
+        if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+        if (this.removeDuplicates) this.removeDuplicates.checked = true;
+        if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
+        if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
+        if (this.dehyphenate) this.dehyphenate.checked = true;
+        if (this.keepTableSpacing) this.keepTableSpacing.checked = true;
+        
+        // Mode-specific options
+        switch (mode) {
+            case 'gentle':
+                // Only basic cleaning, no merging or normalization
+                if (this.mergeBrokenLines) this.mergeBrokenLines.checked = false;
+                if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false;
+                break;
+            case 'moderate':
+                // Enable line merging
+                if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
+                if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false;
+                break;
+            case 'thorough':
+                // Enable merging and whitespace normalization
+                if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
+                if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
+                break;
+            case 'aggressive':
+                // All options enabled
+                if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
+                if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
+                break;
+        }
     }
     
     applyModeDefaults() {
