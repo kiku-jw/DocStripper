@@ -35,6 +35,9 @@ test_utf8.txt
 Thumbs.db
 *.tmp
 
+# Stray directories
+~/
+
 # Build artifacts
 *.pyc
 .pytest_cache/
