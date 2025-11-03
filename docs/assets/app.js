@@ -1990,11 +1990,15 @@ class App {
         // Show start button if files are uploaded
         this.updateStartButton();
         
-        // Scroll to settings section to show uploaded files
+        // Scroll to the START button to prompt user action
         setTimeout(() => {
-            const settingsSection = document.getElementById('settingsSection');
-            if (settingsSection) {
-                settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (this.startBtn) {
+                this.startBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                const settingsSection = document.getElementById('settingsSection');
+                if (settingsSection) {
+                    settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         }, 100);
     }
@@ -2162,10 +2166,16 @@ class App {
         this.results = results;
         this.displayResults(results, totalStats);
         
-        // Scroll to results section after processing
+        // After results are rendered, scroll directly to the first Download button
         setTimeout(() => {
-            this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+            const firstDownloadBtn = document.querySelector('.download-btn');
+            if (firstDownloadBtn) {
+                firstDownloadBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (this.resultsSection) {
+                // Fallback: scroll to results section
+                this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 150);
     }
 
     // Virtualization helper for large texts
