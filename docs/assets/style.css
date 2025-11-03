@@ -487,6 +487,24 @@ body {
     user-select: none;
 }
 
+/* Compact variant for minimal inline options (e.g., Auto-start) */
+.setting-item.compact {
+    padding: 0.35rem 0;
+    background: transparent;
+    border: none;
+}
+.setting-item.compact input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-top: 0;
+}
+.setting-item.compact .setting-title {
+    font-size: 0.9rem;
+}
+.setting-item.compact .setting-desc {
+    font-size: 0.75rem;
+}
+
 .setting-item:hover {
     border-color: var(--primary-color);
     background: var(--surface);

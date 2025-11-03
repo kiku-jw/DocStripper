@@ -2442,25 +2442,33 @@ class App {
 
         this.resultsContainer.innerHTML = html;
         
-        // Inject or update Download All container if multiple files
-        const parent = this.resultsContainer.parentElement;
-        if (parent) {
-            let bulkContainer = document.getElementById('downloadAllContainer');
-            if (!bulkContainer) {
-                bulkContainer = document.createElement('div');
-                bulkContainer.id = 'downloadAllContainer';
-                bulkContainer.className = 'result-actions';
-                parent.insertBefore(bulkContainer, this.resultsContainer);
+        // Inject or update Download All container right AFTER the summary statistics
+        let bulkContainer = document.getElementById('downloadAllContainer');
+        if (!bulkContainer) {
+            bulkContainer = document.createElement('div');
+            bulkContainer.id = 'downloadAllContainer';
+            bulkContainer.className = 'result-actions';
+        }
+        bulkContainer.innerHTML = '';
+        
+        const statsSummaryEl = this.resultsContainer.querySelector('.stats-summary');
+        if (statsSummaryEl) {
+            // Place after stats summary
+            if (!bulkContainer.parentElement) {
+                statsSummaryEl.insertAdjacentElement('afterend', bulkContainer);
             }
-            bulkContainer.innerHTML = '';
-            if (Array.isArray(results) && results.length > 1) {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-primary';
-                btn.id = 'downloadAllBtn';
-                btn.textContent = `Download all (${results.length})`;
-                bulkContainer.appendChild(btn);
-                btn.addEventListener('click', () => this.downloadAll(results));
-            }
+        } else if (!bulkContainer.parentElement && this.resultsContainer.parentElement) {
+            // Fallback: append at top of results section
+            this.resultsContainer.parentElement.insertBefore(bulkContainer, this.resultsContainer);
+        }
+        
+        if (Array.isArray(results) && results.length > 1) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-primary';
+            btn.id = 'downloadAllBtn';
+            btn.textContent = `Download all (${results.length})`;
+            bulkContainer.appendChild(btn);
+            btn.addEventListener('click', () => this.downloadAll(results));
         }
 
         // Setup download and copy buttons
