@@ -1813,14 +1813,16 @@ class App {
     
     updateTemperamentFromValue(value) {
         // Map slider value to one of 4 modes (0, 33, 66, 100)
+        // With step=33, max=100, values are: 0, 33, 66, 99
         let mode = 'gentle';
         if (value >= 0 && value < 33) {
             mode = 'gentle';
         } else if (value >= 33 && value < 66) {
             mode = 'moderate';
-        } else if (value >= 66 && value < 100) {
+        } else if (value >= 66 && value < 99) {
             mode = 'thorough';
         } else {
+            // value >= 99 (i.e., 99 or 100)
             mode = 'aggressive';
         }
         
