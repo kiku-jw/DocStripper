@@ -44,7 +44,7 @@ Looking for something to start with? Check out issues labeled `good first issue`
 
 2. Test your changes:
    ```bash
-   python tool.py --dry-run examples/before_after.txt
+   python tool.py --dry-run document.txt
    ```
 
 ## Code Style
@@ -64,7 +64,7 @@ Looking for something to start with? Check out issues labeled `good first issue`
 ## Documentation
 
 - Update README.md if adding features
-- Update CHANGELOG.md for significant changes
+- Update RELEASE_NOTES for significant changes
 - Add comments for complex logic
 
 ## Commit Messages

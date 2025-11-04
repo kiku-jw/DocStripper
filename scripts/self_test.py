@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Self-test script for DocStripper
-Tests both unit tests and real files from test_files/
+Tests both unit tests and optionally real files from test_files/ (if directory exists)
 """
 import sys
 import os
@@ -74,20 +74,20 @@ def run_unit_tests():
 
 
 def run_file_tests():
-    """Test on real files from test_files/"""
+    """Test on real files (optional - skip if test_files directory not present)"""
     print("\nRunning file tests...")
     
     repo_root = Path(__file__).resolve().parents[1]
     test_files_dir = repo_root / "test_files"
     
     if not test_files_dir.exists():
-        print(f"⚠ test_files directory not found at {test_files_dir}")
+        print(f"⚠ test_files directory not found at {test_files_dir} (skipping file tests)")
         return 0
     
     test_files = sorted(test_files_dir.glob("*.txt"))
     
     if not test_files:
-        print(f"⚠ No .txt files found in {test_files_dir}")
+        print(f"⚠ No .txt files found in {test_files_dir} (skipping file tests)")
         return 0
     
     print(f"Found {len(test_files)} test file(s)")

@@ -1,6 +1,0 @@
-This is auto-
-matic text processing.
-The system can handle
-broken lines mid-sentence.
-This is normal text.
-
