@@ -1813,17 +1813,23 @@ class App {
     
     updateTemperamentFromValue(value) {
         // Map slider value to one of 4 modes (0, 33, 66, 100)
-        // With step=33, max=100, values are: 0, 33, 66, 99
+        // With step=33, max=100, values are: 0, 33, 66, 99 (or 100 if browser rounds)
         let mode = 'gentle';
+        let labelIndex = 0;
+        
         if (value >= 0 && value < 33) {
             mode = 'gentle';
+            labelIndex = 0;
         } else if (value >= 33 && value < 66) {
             mode = 'moderate';
-        } else if (value >= 66 && value < 99) {
+            labelIndex = 1;
+        } else if (value >= 66 && value < 100) {
             mode = 'thorough';
+            labelIndex = 2;
         } else {
-            // value >= 99 (i.e., 99 or 100)
+            // value >= 100 (or >= 99 if browser limits to 99)
             mode = 'aggressive';
+            labelIndex = 3;
         }
         
         // Map to cleaning mode type for compatibility
@@ -1832,18 +1838,12 @@ class App {
         
         // Update label and description
         const labels = ['Gentle', 'Moderate', 'Thorough', 'Aggressive'];
-            const descriptions = [
+        const descriptions = [
             'Safe defaults, preserves formatting. Best for most documents.',
             'Balanced cleaning with line merging enabled. Preserves paragraph spacing.',
             'Comprehensive cleaning with normalization. Preserves paragraph spacing for readability.',
             'Maximum cleaning with all optimizations. Removes paragraph spacing for compact output.'
         ];
-        
-        let labelIndex = 0;
-        if (mode === 'gentle') labelIndex = 0;
-        else if (mode === 'moderate') labelIndex = 1;
-        else if (mode === 'thorough') labelIndex = 2;
-        else labelIndex = 3;
         
         if (this.temperamentLabel) {
             const recommended = labelIndex === 0 ? ' (recommended)' : '';
