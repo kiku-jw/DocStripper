@@ -27,7 +27,7 @@ Replaced "Conservative" and "Aggressive" radio buttons with an intuitive **4-mod
 ### Distribution Ready
 - **Homebrew Tap**: Created `kiku-jw/homebrew-docstripper` repository
 - **PyPI Package**: Ready for distribution (`pip install docstripper`)
-- **Installation Guides**: Comprehensive docs in `INSTALL.md` and `PUBLISH_GUIDE.md`
+- **Installation Guides**: Comprehensive docs in `INSTALL.md`
 
 ### Web Interface Enhancements
 - **Normalize Unicode Option**: Added checkbox in Advanced Options (11 options total)
@@ -53,8 +53,6 @@ Replaced "Conservative" and "Aggressive" radio buttons with an intuitive **4-mod
 - `docs/assets/cleaner.worker.js`: WebWorker implementation for cleaning
 - `docstripper.rb`: Homebrew formula
 - `INSTALL.md`: Installation instructions for all methods
-- `PUBLISH_GUIDE.md`: Distribution guide
-- `HOMEBREW_TAP_SETUP.md`: Homebrew tap setup instructions
 
 ## 🐛 Bug Fixes
 - Fixed Thorough vs Aggressive mode differentiation (paragraph spacing preservation)

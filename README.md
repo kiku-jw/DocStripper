@@ -223,7 +223,7 @@ MIT License — see [LICENSE.txt](LICENSE.txt) for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! See [Contributing Guide](https://github.com/kiku-jw/DocStripper/wiki/Contributing) for guidelines.
 
 ---
 

@@ -123,7 +123,7 @@ There's no hard limit, but very large files (>10MB) may take longer to process, 
 
 ### How can I contribute?
 
-See our [Contributing Guide](../CONTRIBUTING.md) for details. We welcome:
+See our [Contributing Guide](Contributing) for details. We welcome:
 - Bug reports
 - Feature requests
 - Code contributions
