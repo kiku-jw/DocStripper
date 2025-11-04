@@ -5,8 +5,7 @@ class DocStripper {
         // Default options - all enabled
         this.options = {
             removeEmptyLines: options.removeEmptyLines !== false,
-            removePageNumbers: options.removePageNumbers !== false,
-            removeHeadersFooters: options.removeHeadersFooters !== false,
+            removeHeadersFooters: options.removeHeadersFooters !== false, // Includes page numbers removal
             removeDuplicates: options.removeDuplicates !== false,
             removePunctuationLines: options.removePunctuationLines !== false,
             preserveParagraphSpacing: options.preserveParagraphSpacing !== false,
@@ -492,8 +491,8 @@ class DocStripper {
                 shouldRemove = true;
             }
             
-            // Skip page numbers (if enabled) - BEFORE merge
-            if (!shouldRemove && this.options.removePageNumbers && this.isPageNumber(stripped)) {
+            // Skip page numbers (if headers/footers removal is enabled) - BEFORE merge
+            if (!shouldRemove && this.options.removeHeadersFooters && this.isPageNumber(stripped)) {
                 headerFooterRemovedBeforeMerge++;
                 shouldRemove = true;
             }
@@ -776,8 +775,7 @@ class SmartCleaner {
         // Settings for customizing cleaning behavior
         this.settings = {
             removeEmptyLines: true,
-            removePageNumbers: true,
-            removeHeadersFooters: true,
+            removeHeadersFooters: true, // Includes page numbers removal
             removeDuplicates: true,
             removePunctuationLines: true,
             preserveParagraphSpacing: true,
@@ -786,6 +784,7 @@ class SmartCleaner {
             normalizeWhitespace: false,
             keepTableSpacing: true,
             cleaningModeType: 'conservative', // 'conservative' or 'aggressive'
+            cleaningTemperament: 'gentle', // 'gentle', 'moderate', 'thorough', 'aggressive'
         };
     }
     
@@ -949,11 +948,8 @@ class SmartCleaner {
         const removeInstructions = [];
         const preserveInstructions = [];
         
-        if (this.settings.removePageNumbers) {
-            removeInstructions.push('- Page numbers: standalone digits (1, 2, 3), Roman numerals (I, II, III), single letters (A, B, C)');
-        }
-        
         if (this.settings.removeHeadersFooters) {
+            removeInstructions.push('- Page numbers: standalone digits (1, 2, 3), Roman numerals (I, II, III), single letters (A, B, C)');
             removeInstructions.push('- Headers/footers: "Page X of Y", "Confidential", "DRAFT", "Internal Use Only", "PROPRIETARY", etc.');
         }
         
@@ -982,25 +978,42 @@ class SmartCleaner {
         // Build rules section
         const rules = [];
         
-        // Add mode-specific guidance
-        const modeGuidance = this.settings.cleaningModeType === 'aggressive' 
-            ? 'AGGRESSIVE MODE: Be thorough in cleaning. You can merge broken lines and normalize formatting when appropriate.'
-            : 'CONSERVATIVE MODE: Be cautious and preserve structure. When in doubt, keep content. Do not merge lines or normalize formatting aggressively.';
+        // Add temperament-specific guidance
+        const temperament = this.settings.cleaningTemperament || 'gentle';
+        let modeGuidance = '';
+        
+        if (temperament === 'gentle') {
+            modeGuidance = 'GENTLE MODE: Be very cautious and preserve structure. When in doubt, keep content. Do not merge lines or normalize formatting aggressively.';
+        } else if (temperament === 'moderate') {
+            modeGuidance = 'MODERATE MODE: Balanced cleaning. You can merge broken lines when appropriate, but preserve formatting structure.';
+        } else if (temperament === 'thorough') {
+            modeGuidance = 'THOROUGH MODE: Comprehensive cleaning with normalization. Merge broken lines, normalize whitespace and Unicode, but preserve paragraph spacing for readability.';
+        } else if (temperament === 'aggressive') {
+            modeGuidance = 'AGGRESSIVE MODE: Maximum cleaning. Be thorough in removing noise, merge broken lines, normalize formatting, and remove all unnecessary spacing for compact output.';
+        } else {
+            // Fallback to old mode-based guidance
+            modeGuidance = this.settings.cleaningModeType === 'aggressive' 
+                ? 'AGGRESSIVE MODE: Be thorough in cleaning. You can merge broken lines and normalize formatting when appropriate.'
+                : 'CONSERVATIVE MODE: Be cautious and preserve structure. When in doubt, keep content. Do not merge lines or normalize formatting aggressively.';
+        }
         
         rules.push(`0. MODE: ${modeGuidance}`);
         
         if (this.settings.removeDuplicates) {
-            rules.push('1. For consecutive duplicate lines: keep the FIRST occurrence, drop subsequent ones');
+            const duplicateRule = temperament === 'aggressive' 
+                ? '1. For duplicate lines (consecutive OR similar): keep the FIRST occurrence, drop subsequent ones. Be more aggressive in detecting near-duplicates.'
+                : '1. For consecutive duplicate lines: keep the FIRST occurrence, drop subsequent ones';
+            rules.push(duplicateRule);
         }
         if (this.settings.removeEmptyLines) {
-            if (this.settings.preserveParagraphSpacing) {
+            if (this.settings.preserveParagraphSpacing && temperament !== 'aggressive') {
                 rules.push('2. Empty lines: preserve ONE empty line between non-empty paragraphs, drop multiple empty lines');
             } else {
-                rules.push('2. Empty lines: remove ALL empty lines');
+                rules.push('2. Empty lines: remove ALL empty lines (no paragraph spacing)');
             }
         }
-        if (this.settings.removePageNumbers) {
-            rules.push('3. Page numbers: drop ONLY if the entire line is just a number/letter (e.g., "1", "III", "A")');
+        if (this.settings.removeHeadersFooters) {
+            rules.push('3. Page numbers and headers/footers: drop ONLY if the entire line matches known patterns (e.g., "1", "III", "A", "Page X of Y", "Confidential")');
         }
         rules.push('4. Keep ALL meaningful content - when in doubt, use "keep"');
 
@@ -1503,8 +1516,7 @@ class App {
         // Initialize with default settings (all enabled)
         this.stripper = new DocStripper({
             removeEmptyLines: true,
-            removePageNumbers: true,
-            removeHeadersFooters: true,
+            removeHeadersFooters: true, // Includes page numbers removal
             removeDuplicates: true,
             removePunctuationLines: true,
             preserveParagraphSpacing: true,
@@ -1630,8 +1642,7 @@ class App {
         
         // Settings checkboxes
         this.removeEmptyLines = document.getElementById('removeEmptyLines');
-        this.removePageNumbers = document.getElementById('removePageNumbers');
-        this.removeHeadersFooters = document.getElementById('removeHeadersFooters');
+        this.removeHeadersFooters = document.getElementById('removeHeadersFooters'); // Includes page numbers removal
         // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
         this.removeDuplicates = document.getElementById('removeDuplicates');
         this.removePunctuationLines = document.getElementById('removePunctuationLines');
@@ -1719,11 +1730,14 @@ class App {
                 if (settings.removeEmptyLines !== undefined && this.removeEmptyLines) {
                     this.removeEmptyLines.checked = settings.removeEmptyLines;
                 }
-                if (settings.removePageNumbers !== undefined && this.removePageNumbers) {
-                    this.removePageNumbers.checked = settings.removePageNumbers;
-                }
                 if (settings.removeHeadersFooters !== undefined && this.removeHeadersFooters) {
                     this.removeHeadersFooters.checked = settings.removeHeadersFooters;
+                }
+                // Backward compatibility: if old removePageNumbers setting exists, merge it
+                if (settings.removePageNumbers !== undefined && settings.removePageNumbers === false) {
+                    if (this.removeHeadersFooters) {
+                        this.removeHeadersFooters.checked = false;
+                    }
                 }
                 // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
                 if (settings.removeDuplicates !== undefined && this.removeDuplicates) {
@@ -1779,8 +1793,7 @@ class App {
                 cleaningModeType: this.cleaningModeType,
                 cleaningMode: this.cleaningMode,
                 removeEmptyLines: this.removeEmptyLines?.checked ?? true,
-                removePageNumbers: this.removePageNumbers?.checked ?? true,
-                removeHeadersFooters: this.removeHeadersFooters?.checked ?? true,
+                removeHeadersFooters: this.removeHeadersFooters?.checked ?? true, // Includes page numbers removal
                 removeRepeatingHeadersFooters: this.removeHeadersFooters?.checked ?? true, // Automatically enabled when removeHeadersFooters is enabled
                 removeDuplicates: this.removeDuplicates?.checked ?? true,
                 removePunctuationLines: this.removePunctuationLines?.checked ?? true,
@@ -1817,11 +1830,11 @@ class App {
         
         // Update label and description
         const labels = ['Gentle', 'Moderate', 'Thorough', 'Aggressive'];
-        const descriptions = [
+            const descriptions = [
             'Safe defaults, preserves formatting. Best for most documents.',
-            'Balanced cleaning with line merging enabled.',
-            'Thorough cleaning with Unicode normalization. Preserves paragraph spacing.',
-            'Maximum cleaning with all optimizations. Removes paragraph spacing.'
+            'Balanced cleaning with line merging enabled. Preserves paragraph spacing.',
+            'Comprehensive cleaning with normalization. Preserves paragraph spacing for readability.',
+            'Maximum cleaning with all optimizations. Removes paragraph spacing for compact output.'
         ];
         
         let labelIndex = 0;
@@ -1845,11 +1858,9 @@ class App {
         // Apply defaults based on temperament mode
         // Base options (always ON)
         if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
-        if (this.removePageNumbers) this.removePageNumbers.checked = true;
-        if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+        if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true; // Includes page numbers
         if (this.removeDuplicates) this.removeDuplicates.checked = true;
         if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
-        if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
         if (this.dehyphenate) this.dehyphenate.checked = true;
         if (this.keepTableSpacing) this.keepTableSpacing.checked = true;
         
@@ -1859,11 +1870,15 @@ class App {
                 // Only basic cleaning, no merging or normalization
                 if (this.mergeBrokenLines) this.mergeBrokenLines.checked = false;
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false;
+                if (this.normalizeUnicode) this.normalizeUnicode.checked = false;
+                if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
                 break;
             case 'moderate':
                 // Enable line merging
                 if (this.mergeBrokenLines) this.mergeBrokenLines.checked = true;
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = false;
+                if (this.normalizeUnicode) this.normalizeUnicode.checked = false;
+                if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
                 break;
             case 'thorough':
                 // Enable merging, whitespace normalization, and Unicode normalization
@@ -1872,6 +1887,7 @@ class App {
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
                 if (this.normalizeUnicode) this.normalizeUnicode.checked = true;
                 if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = true;
+                // More lenient empty line handling - keep paragraph spacing
                 break;
             case 'aggressive':
                 // Maximum cleaning: all optimizations enabled
@@ -1880,6 +1896,7 @@ class App {
                 if (this.normalizeWhitespace) this.normalizeWhitespace.checked = true;
                 if (this.normalizeUnicode) this.normalizeUnicode.checked = true;
                 if (this.preserveParagraphSpacing) this.preserveParagraphSpacing.checked = false;
+                // More aggressive empty line removal - no paragraph spacing
                 break;
         }
     }
@@ -1888,8 +1905,7 @@ class App {
         if (this.cleaningModeType === 'aggressive') {
             // Aggressive mode defaults
             if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
-            if (this.removePageNumbers) this.removePageNumbers.checked = true;
-            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true; // Includes page numbers
             // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
             if (this.removeDuplicates) this.removeDuplicates.checked = true;
             if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
@@ -1901,8 +1917,7 @@ class App {
         } else {
             // Conservative mode defaults (current behavior)
             if (this.removeEmptyLines) this.removeEmptyLines.checked = true;
-            if (this.removePageNumbers) this.removePageNumbers.checked = true;
-            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true;
+            if (this.removeHeadersFooters) this.removeHeadersFooters.checked = true; // Includes page numbers
             // removeRepeatingHeadersFooters is now automatically enabled when removeHeadersFooters is enabled
             if (this.removeDuplicates) this.removeDuplicates.checked = true;
             if (this.removePunctuationLines) this.removePunctuationLines.checked = true;
@@ -2019,12 +2034,6 @@ class App {
         // Settings change - save settings and update start button state
         if (this.removeEmptyLines) {
             this.removeEmptyLines.addEventListener('change', () => {
-                this.saveSettings();
-                this.updateStartButton();
-            });
-        }
-        if (this.removePageNumbers) {
-            this.removePageNumbers.addEventListener('change', () => {
                 this.saveSettings();
                 this.updateStartButton();
             });
@@ -2280,8 +2289,7 @@ class App {
         // Get current settings from checkboxes (used for both Fast and Smart modes)
         const settings = {
             removeEmptyLines: this.removeEmptyLines ? this.removeEmptyLines.checked : true,
-            removePageNumbers: this.removePageNumbers ? this.removePageNumbers.checked : true,
-            removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true,
+            removeHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true, // Includes page numbers removal
             removeRepeatingHeadersFooters: this.removeHeadersFooters ? this.removeHeadersFooters.checked : true, // Automatically enabled when removeHeadersFooters is enabled
             removeDuplicates: this.removeDuplicates ? this.removeDuplicates.checked : true,
             removePunctuationLines: this.removePunctuationLines ? this.removePunctuationLines.checked : true,
@@ -2292,6 +2300,7 @@ class App {
             normalizeUnicode: this.normalizeUnicode ? this.normalizeUnicode.checked : false,
             keepTableSpacing: this.keepTableSpacing ? this.keepTableSpacing.checked : true,
             cleaningModeType: this.cleaningModeType, // Pass mode type to SmartCleaner
+            cleaningTemperament: this.cleaningTemperamentMode || 'gentle', // Pass temperament to SmartCleaner
         };
 
         // Create new stripper instance with current settings (for Fast mode or fallback)
@@ -2737,7 +2746,7 @@ class App {
             snackbar.className = 'support-snackbar';
             snackbar.innerHTML = `
                 <div class="snackbar-content">
-                    <span class="snackbar-text">Saved you some time? ☕ <a href="https://kiku0.gumroad.com/coffee" target="_blank" rel="noopener">Support on Gumroad</a></span>
+                    <span class="snackbar-text">Saved you some time? 🛒 <a href="https://kiku0.gumroad.com/coffee" target="_blank" rel="noopener">Support on Gumroad</a></span>
                     <button class="snackbar-close" aria-label="Close">×</button>
                 </div>
             `;
