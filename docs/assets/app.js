@@ -1823,11 +1823,11 @@ class App {
         } else if (value >= 33 && value < 66) {
             mode = 'moderate';
             labelIndex = 1;
-        } else if (value >= 66 && value < 100) {
+        } else if (value >= 66 && value < 99) {
             mode = 'thorough';
             labelIndex = 2;
         } else {
-            // value >= 100 (or >= 99 if browser limits to 99)
+            // value >= 99 (handles both 99 and 100, since step=33 with max=100 may give 99)
             mode = 'aggressive';
             labelIndex = 3;
         }
