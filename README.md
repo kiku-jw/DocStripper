@@ -209,9 +209,7 @@ More content.
 
 ## 📝 Changelog
 
-See [RELEASE_NOTES_v2.1.0.md](RELEASE_NOTES_v2.1.0.md) for the latest release notes.
-
-All releases: [GitHub Releases](https://github.com/kiku-jw/DocStripper/releases)
+See [GitHub Releases](https://github.com/kiku-jw/DocStripper/releases) for release notes and changelog.
 
 ---
 

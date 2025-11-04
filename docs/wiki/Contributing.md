@@ -64,7 +64,7 @@ Looking for something to start with? Check out issues labeled `good first issue`
 ## Documentation
 
 - Update README.md if adding features
-- Update RELEASE_NOTES for significant changes
+- Create GitHub Release notes for significant changes
 - Add comments for complex logic
 
 ## Commit Messages
