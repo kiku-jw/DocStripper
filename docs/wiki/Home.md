@@ -2,7 +2,7 @@
 
 **DocStripper** automatically removes noise from text documents. Clean your `.txt`, `.docx`, and `.pdf` files with intelligent rule-based processing.
 
-## 🌐 [Try it Online](https://kiku-jw.github.io/DocStripper/) - No installation needed!
+## 🌐 [Try it Online](https://kikuai-lab.github.io/DocStripper/) - No installation needed!
 
 ## ✨ Key Features
 
@@ -27,7 +27,7 @@
 ## 🚀 Quick Start
 
 ### Web App
-1. Visit https://kiku-jw.github.io/DocStripper/
+1. Visit https://kikuai-lab.github.io/DocStripper/
 2. Upload your files (.txt, .docx, .pdf)
 3. Click "Start Cleaning"
 4. Download or copy results
@@ -35,7 +35,7 @@
 ### CLI
 ```bash
 # Install
-git clone https://github.com/kiku-jw/DocStripper.git
+git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
 
 # Clean a file
@@ -74,5 +74,5 @@ All default features plus:
 
 ## 📝 License
 
-MIT License - See [LICENSE.txt](https://github.com/kiku-jw/DocStripper/blob/main/LICENSE.txt)
+MIT License - See [LICENSE.txt](https://github.com/KikuAI-Lab/DocStripper/blob/main/LICENSE.txt)
 

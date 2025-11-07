@@ -12,9 +12,9 @@
 
 **DocStripper** automatically removes noise from text documents. Remove page numbers, headers/footers, duplicate lines, and empty lines from `.txt`, `.docx`, and `.pdf` files. Choose between **Fast Clean** (instant) or **Smart Clean** (AI-powered). Works entirely in your browser - 100% private, no uploads, no sign-ups.
 
-**🌐 [Try it online →](https://kiku-jw.github.io/DocStripper/)** — No installation needed!
+**🌐 [Try it online →](https://kikuai-lab.github.io/DocStripper/)** — No installation needed!
 
-**📦 Latest Release:** [v2.1.0](https://github.com/kiku-jw/DocStripper/releases/tag/v2.1.0) — UX enhancements & distribution ready
+**📦 Latest Release:** [v2.1.0](https://github.com/KikuAI-Lab/DocStripper/releases/tag/v2.1.0) — UX enhancements & distribution ready
 
 ---
 
@@ -39,7 +39,7 @@
 
 ### Web App (Recommended)
 
-1. Visit [https://kiku-jw.github.io/DocStripper/](https://kiku-jw.github.io/DocStripper/)
+1. Visit [https://kikuai-lab.github.io/DocStripper/](https://kikuai-lab.github.io/DocStripper/)
 2. Upload your files
 3. Choose **Fast Clean** (instant) or **Smart Clean** (AI-powered)
 4. Adjust **Cleaning Temperament** slider: Gentle (recommended), Moderate, Thorough, or Aggressive
@@ -58,14 +58,14 @@ docstripper document.txt
 
 **Option 2: Homebrew (macOS)**
 ```bash
-brew tap kiku-jw/docstripper
+brew tap KikuAI-Lab/docstripper
 brew install docstripper
 docstripper document.txt
 ```
 
 **Option 3: Manual Installation**
 ```bash
-git clone https://github.com/kiku-jw/DocStripper.git
+git clone https://github.com/KikuAI-Lab/DocStripper.git
 cd DocStripper
 python tool.py document.txt
 ```
@@ -209,7 +209,7 @@ More content.
 
 ## 📝 Changelog
 
-See [GitHub Releases](https://github.com/kiku-jw/DocStripper/releases) for release notes and changelog.
+See [GitHub Releases](https://github.com/KikuAI-Lab/DocStripper/releases) for release notes and changelog.
 
 ---
 
@@ -221,7 +221,7 @@ MIT License — see [LICENSE.txt](LICENSE.txt) for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! See [Contributing Guide](https://github.com/kiku-jw/DocStripper/wiki/Contributing) for guidelines.
+Contributions are welcome! See [Contributing Guide](https://github.com/KikuAI-Lab/DocStripper/wiki/Contributing) for guidelines.
 
 ---
 
@@ -229,7 +229,7 @@ Contributions are welcome! See [Contributing Guide](https://github.com/kiku-jw/D
 
 **Made with ❤️ for clean documents**
 
-[⭐ Star this repo](https://github.com/kiku-jw/DocStripper) | [🌐 Try online](https://kiku-jw.github.io/DocStripper/) | [🚀 Product Hunt](https://www.producthunt.com/products/docstripper) | [🐛 Report Bug](https://github.com/kiku-jw/DocStripper/issues)
+[⭐ Star this repo](https://github.com/KikuAI-Lab/DocStripper) | [🌐 Try online](https://kikuai-lab.github.io/DocStripper/) | [🚀 Product Hunt](https://www.producthunt.com/products/docstripper) | [🐛 Report Bug](https://github.com/KikuAI-Lab/DocStripper/issues)
 
 ---
 
@@ -241,7 +241,7 @@ Support this project and help keep it free:
 
 ## 🔗 Connect
 
-- 📰 **Blog & Updates**: [t.me/kiku_blog](https://t.me/kiku_blog)
+- 📰 **Blog & Updates**: [t.me/kiku_AI](https://t.me/kiku_AI)
 - 💬 **Discord**: [discord.gg/4Kxs97JvsU](https://discord.gg/4Kxs97JvsU)
 - 💼 **LinkedIn**: [linkedin.com/in/kiku-jw](https://www.linkedin.com/in/kiku-jw/)
 - 🌐 **About.me**: [about.me/kiku_jw](https://about.me/kiku_jw)

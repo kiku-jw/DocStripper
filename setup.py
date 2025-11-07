@@ -34,7 +34,7 @@ setup(
     description="AI-powered batch document cleaner - Remove noise from text documents automatically",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/kiku-jw/DocStripper",
+    url="https://github.com/KikuAI-Lab/DocStripper",
     py_modules=["tool"],
     scripts=[],
     entry_points={
@@ -62,8 +62,8 @@ setup(
     },
     keywords="document cleaner, text processing, pdf, docx, batch processing",
     project_urls={
-        "Bug Reports": "https://github.com/kiku-jw/DocStripper/issues",
-        "Source": "https://github.com/kiku-jw/DocStripper",
-        "Documentation": "https://github.com/kiku-jw/DocStripper/wiki",
+        "Bug Reports": "https://github.com/KikuAI-Lab/DocStripper/issues",
+        "Source": "https://github.com/KikuAI-Lab/DocStripper",
+        "Documentation": "https://github.com/KikuAI-Lab/DocStripper/wiki",
     },
 )
