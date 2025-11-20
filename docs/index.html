@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocStripper - Batch Document Cleaner</title>
+    <meta name="description" content="DocStripper - AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered with on-device LLM). Works entirely in your browser - 100% private, no uploads.">
+    <meta name="keywords" content="document cleaner, text cleaner, remove page numbers, clean documents, text processing, document processing, AI document cleaner, batch document cleaner, remove headers footers, clean text files, docx cleaner, txt cleaner">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kikuai-lab.github.io/DocStripper/">
+    <meta property="og:title" content="DocStripper - Batch Document Cleaner">
+    <meta property="og:description" content="AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered). Works entirely in your browser - 100% private.">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://kikuai-lab.github.io/DocStripper/">
+    <meta property="twitter:title" content="DocStripper - Batch Document Cleaner">
+    <meta property="twitter:description" content="AI-powered batch document cleaner. Remove page numbers, headers, footers, duplicates, and empty lines automatically. Fast Clean (instant) or Smart Clean (AI-powered). Works entirely in your browser - 100% private.">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://kikuai-lab.github.io/DocStripper/">
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "DocStripper",
+      "description": "AI-powered batch document cleaner. Remove noise from text documents automatically - page numbers, headers, footers, duplicates, and empty lines. Works entirely in your browser - 100% private.",
+      "url": "https://kikuai-lab.github.io/DocStripper/",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Fast Clean - Instant rule-based cleaning",
+        "Smart Clean - AI-powered cleaning with on-device LLM",
+        "Remove page numbers",
+        "Remove headers and footers",
+        "Remove duplicate lines",
+        "Remove empty lines",
+        "100% private - no uploads",
+        "Works offline",
+                        "Supports .txt, .docx, and .pdf files"
+      ],
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "softwareVersion": "2.1.0",
+      "releaseNotes": "UX enhancements, Cleaning Temperament slider, WebWorker support, distribution ready",
+      "author": {
+        "@type": "Person",
+        "name": "Kiku"
+      }
+    }
+    </script>
+    
+    <link rel="stylesheet" href="assets/style.css?v=40">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    
+    <!-- Google Translate Widget -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,es,fr,de,it,pt,ru,ja,zh-CN,ko,ar,hi',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
+    <!-- PDF.js for PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- JSZip and FileSaver for ZIP downloads -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
+    <!-- Privacy-friendly analytics (Plausible) -->
+    <script defer data-domain="kikuai-lab.github.io" src="https://plausible.io/js/script.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="logo">DocStripper</h1>
+                    <p class="tagline">Batch document cleaner — Remove noise from text documents automatically</p>
+                </div>
+                <div class="header-controls">
+                    <div id="google_translate_element" class="translate-widget"></div>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Upload Section - Prominent at the top -->
+        <section class="upload-section">
+            <div class="container">
+                <div class="upload-card">
+                    <h2>Upload Your Documents</h2>
+                    <p class="upload-description">
+                        Drop your files here or click to browse. All processing happens in your browser — your files never leave your computer!
+                    </p>
+                    
+                    <!-- First-visit privacy tooltip -->
+                    <div class="onboarding-tooltip" id="onboardingTooltip" style="display: none;">
+                        <div class="tooltip-content">
+                            <div class="tooltip-icon">🔒</div>
+                            <div class="tooltip-text">
+                                <strong>100% Private</strong> — Everything works offline, nothing is sent to any server. Your files stay on your device.
+                            </div>
+                            <button class="tooltip-close" id="closeTooltip" aria-label="Close">×</button>
+                        </div>
+                        <div class="tooltip-arrow"></div>
+                    </div>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📄</div>
+                            <p class="upload-text">
+                                <span class="upload-main-text">Drop files here</span>
+                                <span class="upload-or">or</span>
+                                <span class="upload-link">click to browse</span>
+                            </p>
+                            <p class="upload-hint">Supports: .txt, .docx, .pdf files</p>
+                        </div>
+                        <input type="file" id="fileInput" multiple accept=".txt,.docx,.pdf" class="file-input-hidden">
+                    </div>
+
+                    <!-- Cleaning Settings -->
+                    <div class="settings-section" id="settingsSection">
+                        <h3>Cleaning Options</h3>
+                        
+                        <!-- Cleaning Mode Selection -->
+                        <div class="cleaning-mode-selector">
+                            <div class="mode-options-container">
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningMode" id="fastMode" value="fast" checked>
+                                    <span class="mode-label">
+                                        <span class="mode-title">⚡ Fast Clean</span>
+                                        <span class="mode-desc">Rule-based cleaning (instant)</span>
+                                    </span>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="cleaningMode" id="smartMode" value="smart">
+                                    <span class="mode-label">
+                                        <span class="mode-title">🤖 Smart Clean <span class="beta-badge">Beta</span></span>
+                                        <span class="mode-desc">AI-powered cleaning (on-device LLM)</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Smart Mode Warning -->
+                        <div class="smart-mode-warning" id="smartModeWarning" style="display: none;">
+                            <div class="warning-icon">ℹ️</div>
+                            <div class="warning-content">
+                                <strong>Smart Clean requires:</strong>
+                                <ul>
+                                    <li>One-time download of ~100-200 MB (model weights)</li>
+                                    <li>WebGPU support (most modern browsers)</li>
+                                    <li>Works offline after first load</li>
+                                    <li>Files never leave your browser</li>
+                                </ul>
+                                <p class="warning-note"><strong>Note:</strong> Cleaning options below customize the AI's behavior. Unchecked options will be preserved in the output.</p>
+                                <p class="warning-note">If WebGPU is unavailable, Fast Clean will be used automatically.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="smart-progress" id="smartProgress" style="display: none;">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">Loading model...</div>
+                            <button class="btn btn-secondary cancel-btn" id="cancelBtn" style="display: none;">Cancel</button>
+                        </div>
+                        
+                        <!-- Cleaning Temperament Slider -->
+                        <div class="cleaning-temperament-selector" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                            <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                                Cleaning Temperament:
+                                <span id="temperamentLabel" style="font-weight: 400; color: var(--text-light); margin-left: 0.5rem;">Gentle (recommended)</span>
+                            </label>
+                            <div class="temperament-slider-container">
+                                <input type="range" id="cleaningTemperament" min="0" max="100" value="0" step="33" class="temperament-slider">
+                                <div class="temperament-labels">
+                                    <span class="temperament-label">Gentle</span>
+                                    <span class="temperament-label">Moderate</span>
+                                    <span class="temperament-label">Thorough</span>
+                                    <span class="temperament-label">Aggressive</span>
+                                </div>
+                                <div class="temperament-description" id="temperamentDescription">
+                                    Safe defaults, preserves formatting. Best for most documents.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Options Section -->
+                        <details class="advanced-options">
+                            <summary class="advanced-options-toggle">
+                                <span>⚙️ Advanced Options</span>
+                                <span class="advanced-options-count">(10)</span>
+                            </summary>
+                            <div class="settings-grid advanced-options-content">
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeEmptyLines" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Empty Lines</span>
+                                        <span class="setting-desc">Remove blank and whitespace-only lines</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeHeadersFooters" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Headers, Footers & Page Numbers</span>
+                                        <span class="setting-desc">Remove page numbers (1, 2, 3...), headers/footers (Page X of Y, Confidential, etc.) and repeating headers/footers</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removeDuplicates" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Duplicates</span>
+                                        <span class="setting-desc">Collapse consecutive identical lines</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="removePunctuationLines" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Remove Punctuation Lines</span>
+                                        <span class="setting-desc">Remove lines with only symbols (---, ***, ===)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="dehyphenate" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Dehyphenate</span>
+                                        <span class="setting-desc">Join words broken across lines (auto-\nmatic → automatic)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="preserveParagraphSpacing" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Preserve Paragraph Spacing</span>
+                                        <span class="setting-desc">Keep one empty line between paragraphs</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="mergeBrokenLines">
+                                    <span class="setting-label">
+                                        <span class="setting-title">Merge Broken Lines</span>
+                                        <span class="setting-desc">Join lines broken mid-sentence (protects lists)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="normalizeWhitespace">
+                                    <span class="setting-label">
+                                        <span class="setting-title">Normalize Whitespace</span>
+                                        <span class="setting-desc">Collapse multiple spaces, normalize tabs (protects tables)</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="normalizeUnicode">
+                                    <span class="setting-label">
+                                        <span class="setting-title">Normalize Unicode</span>
+                                        <span class="setting-desc">Convert smart quotes and dashes to ASCII equivalents</span>
+                                    </span>
+                                </label>
+                                <label class="setting-item">
+                                    <input type="checkbox" id="keepTableSpacing" checked>
+                                    <span class="setting-label">
+                                        <span class="setting-title">Keep Table Spacing</span>
+                                        <span class="setting-desc">Preserve spacing in detected table blocks</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </details>
+                        <button class="btn btn-primary start-btn" id="startBtn" style="margin-top: 0.5rem; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; display: none;">
+                            🚀 Start Cleaning
+                        </button>
+                        <label class="setting-item compact" style="margin-top: 0.25rem; margin-bottom: 0.25rem; align-items: center; justify-content: center;">
+                            <input type="checkbox" id="autoStartAfterUpload">
+                            <span class="setting-label">
+                                <span class="setting-title">Auto-start after upload</span>
+                                <span class="setting-desc">Start automatically after adding files</span>
+                            </span>
+                        </label>
+                        <p class="mode-note" id="modeNote" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light); text-align: center;">
+                            Fast Clean mode selected
+                        </p>
+                    </div>
+
+                    <div id="fileList" class="file-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="container">
+                <h2>Cleaning Results</h2>
+                <div id="resultsContainer"></div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <h2>Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h3>Fast & Lightweight</h3>
+                        <p>Works entirely in your browser, no installation needed</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>100% Private</h3>
+                        <p>All processing happens in your browser - files never leave your computer</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Preview Mode</h3>
+                        <p>See changes before applying them</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Multiple Files</h3>
+                        <p>Process multiple files at once</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>Detailed Statistics</h3>
+                        <p>See exactly what was removed</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <h3>No Installation</h3>
+                        <p>Works on any device with a modern browser</p>
+                    </div>
+                </div>
+                
+                <!-- Product Hunt Badge -->
+                <div class="product-hunt-badge">
+                    <a href="https://www.producthunt.com/products/docstripper?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-docstripper" target="_blank" rel="noopener noreferrer">
+                        <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1033037&theme=light&t=1761933370103" alt="DocStripper - AI-powered batch document cleaner | Product Hunt" width="250" height="54" />
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section -->
+        <section class="demo">
+            <div class="container">
+                <h2>See What Gets Removed</h2>
+                <div class="demo-container">
+                    <div class="demo-panel">
+                        <h3>Before</h3>
+                        <pre><code>Page 1 of 5
+Confidential
+
+Introduction
+Introduction
+
+This is important content.
+This is important content.
+
+1
+2
+3
+
+Page 2 of 5
+DRAFT
+
+Main content starts here.
+Main content starts here.
+
+
+Empty line above.</code></pre>
+                    </div>
+                    <div class="demo-panel">
+                        <h3>After</h3>
+                        <pre><code>Introduction
+This is important content.
+Main content starts here.
+Empty line above.</code></pre>
+                    </div>
+                </div>
+                <div class="demo-stats">
+                    <div class="stat">
+                        <span class="stat-number">25</span>
+                        <span class="stat-label">Lines Removed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">7</span>
+                        <span class="stat-label">Duplicates Collapsed</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">15</span>
+                        <span class="stat-label">Headers/Footers Removed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLI Section -->
+        <section class="cli-section">
+            <div class="container">
+                <h2>Prefer Command Line?</h2>
+                <p>You can also use DocStripper as a CLI tool. Check out our <a href="https://github.com/KikuAI-Lab/DocStripper#installation" target="_blank">GitHub repository</a> for installation instructions.</p>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="how-it-works-content">
+                    <p class="how-it-works-intro">
+                        DocStripper uses a simple but effective line-by-line cleaning algorithm to remove noise from your documents:
+                    </p>
+                    
+                    <div class="how-it-works-steps">
+                        <div class="how-it-works-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Read & Extract</h3>
+                                <p>The tool reads your file (TXT, DOCX, or PDF) and extracts all text content. For DOCX files, it extracts text from the document structure. For PDF files, it extracts text while preserving layout.</p>
+                            </div>
+                        </div>
+
+                        <div class="how-it-works-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Line-by-Line Analysis</h3>
+                                <p>Each line is analyzed and filtered based on several criteria:</p>
+                                <ul class="step-list">
+                                    <li><strong>Empty lines</strong> — Removed completely</li>
+                                    <li><strong>Page numbers</strong> — Lines containing only digits (e.g., "1", "2", "3")</li>
+                                    <li><strong>Headers/Footers</strong> — Common patterns like "Page 1 of 5", "Confidential", "DRAFT"</li>
+                                    <li><strong>Duplicate lines</strong> — Consecutive identical lines are collapsed into one</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="how-it-works-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Clean Output</h3>
+                                <p>The cleaned text is assembled from the remaining lines, preserving the original formatting and structure while removing all noise.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="how-it-works-note">
+                        <p><strong>🔒 Privacy First:</strong> All processing happens entirely in your browser. Your files never leave your computer — no uploads, no server-side processing, complete privacy.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Made with ❤️ for clean documents</p>
+                <div class="footer-links">
+                    <a href="https://github.com/KikuAI-Lab/DocStripper">GitHub</a>
+                    <a href="https://github.com/KikuAI-Lab/DocStripper/wiki">Wiki</a>
+                    <a href="https://github.com/KikuAI-Lab/DocStripper/wiki/FAQ">FAQ</a>
+                    <a href="https://github.com/KikuAI-Lab/DocStripper/issues">Issues</a>
+                    <a href="https://github.com/KikuAI-Lab/DocStripper/blob/main/LICENSE.txt">License</a>
+                </div>
+                <div class="product-hunt-footer">
+                    <a href="https://www.producthunt.com/products/docstripper?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-docstripper" target="_blank" rel="noopener noreferrer">
+                        <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1033037&theme=light&t=1761933370103" alt="DocStripper - AI-powered batch document cleaner | Product Hunt" width="200" height="43" />
+                    </a>
+                </div>
+                <p class="footer-copyright">© <span id="currentYear">2025</span> DocStripper. MIT License.</p>
+                <p class="footer-author">
+                    Created by <strong>Kiku</strong> · Updates & Devlog → 
+                    <a href="https://t.me/kiku_AI" target="_blank" rel="noopener noreferrer">t.me/kiku_AI</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Support Button -->
+    <div class="support-container">
+        <button class="support-btn" id="supportBtn" aria-label="Support this project" title="Support this project">
+            💝
+        </button>
+        <div class="support-menu" id="supportMenu">
+            <div class="support-menu-header">
+                <strong>Support DocStripper</strong>
+                <button class="support-close" id="supportClose" aria-label="Close">×</button>
+            </div>
+            <div class="support-menu-links">
+                <a href="https://kiku0.gumroad.com/coffee" target="_blank" rel="noopener noreferrer" class="support-link">
+                    <span>🛒</span> Support on Gumroad
+                </a>
+                <a href="https://buymeacoffee.com/kiku" target="_blank" rel="noopener noreferrer" class="support-link">
+                    <span>☕</span> Buy Me a Coffee
+                </a>
+                <a href="https://thanks.dev/d/gh/kiku-jw" target="_blank" rel="noopener noreferrer" class="support-link">
+                    <span>🙏</span> Thanks.dev
+                </a>
+                <a href="https://ko-fi.com/kiku_jw" target="_blank" rel="noopener noreferrer" class="support-link">
+                    <span>💚</span> Ko-fi
+                </a>
+            </div>
+            <div class="support-menu-social">
+                <a href="https://discord.gg/4Kxs97JvsU" target="_blank" rel="noopener noreferrer" class="support-social" title="Discord">
+                    💬
+                </a>
+                <a href="https://t.me/kiku_AI" target="_blank" rel="noopener noreferrer" class="support-social" title="Telegram">
+                    📰
+                </a>
+                <a href="https://www.linkedin.com/in/kiku-jw/" target="_blank" rel="noopener noreferrer" class="support-social" title="LinkedIn">
+                    💼
+                </a>
+                <a href="https://about.me/kiku_jw" target="_blank" rel="noopener noreferrer" class="support-social" title="About.me">
+                    🌐
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/app.js?v=40"></script>
+</body>
+</html>
