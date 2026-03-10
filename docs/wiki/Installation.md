@@ -3,7 +3,7 @@
 ## Web Application
 
 DocStripper web application requires no installation! Just visit:
-**https://kikuai-lab.github.io/DocStripper/**
+**https://kiku-jw.github.io/DocStripper/**
 
 ### Browser Requirements
 
@@ -24,7 +24,7 @@ DocStripper web application requires no installation! Just visit:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/KikuAI-Lab/DocStripper.git
+   git clone https://github.com/kiku-jw/DocStripper.git
    cd DocStripper
    ```
 

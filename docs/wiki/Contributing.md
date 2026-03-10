@@ -6,11 +6,11 @@ Thank you for your interest in contributing to DocStripper! 🎉
 
 ### Reporting Bugs
 
-Found a bug? Please create an issue using the [Bug Report template](https://github.com/KikuAI-Lab/DocStripper/issues/new?template=bug_report.md).
+Found a bug? Please create an issue using the [Bug Report template](https://github.com/kiku-jw/DocStripper/issues/new?template=bug_report.md).
 
 ### Suggesting Features
 
-Have an idea? We'd love to hear it! Use the [Feature Request template](https://github.com/KikuAI-Lab/DocStripper/issues/new?template=feature_request.md).
+Have an idea? We'd love to hear it! Use the [Feature Request template](https://github.com/kiku-jw/DocStripper/issues/new?template=feature_request.md).
 
 ### Good First Issues
 
@@ -77,8 +77,8 @@ Use clear, descriptive commit messages:
 
 ## Questions?
 
-- Check [GitHub Discussions](https://github.com/KikuAI-Lab/DocStripper/discussions)
-- Open an [Issue](https://github.com/KikuAI-Lab/DocStripper/issues)
-- Read the [Wiki](https://github.com/KikuAI-Lab/DocStripper/wiki)
+- Check [GitHub Discussions](https://github.com/kiku-jw/DocStripper/discussions)
+- Open an [Issue](https://github.com/kiku-jw/DocStripper/issues)
+- Read the [Wiki](https://github.com/kiku-jw/DocStripper/wiki)
 
 Thank you for helping make DocStripper better! 🙏

@@ -4,7 +4,7 @@
 
 ### Quick Start
 
-1. Visit https://kikuai-lab.github.io/DocStripper/
+1. Visit https://kiku-jw.github.io/DocStripper/
 2. Click "Upload Your Documents" or drag & drop files
 3. Choose cleaning mode:
    - **Fast Clean**: Instant rule-based cleaning

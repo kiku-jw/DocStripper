@@ -16,7 +16,7 @@ docstripper document.txt
 **Recommended: Install from Tap**
 
 ```bash
-brew tap KikuAI-Lab/docstripper
+brew tap kiku-jw/docstripper
 brew install docstripper
 ```
 
@@ -35,7 +35,7 @@ docstripper document.txt
 
 ```bash
 # Clone repository
-git clone https://github.com/KikuAI-Lab/DocStripper.git
+git clone https://github.com/kiku-jw/DocStripper.git
 cd DocStripper
 
 # Make executable (optional, for direct usage)

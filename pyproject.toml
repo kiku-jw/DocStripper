@@ -28,10 +28,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/KikuAI-Lab/DocStripper"
-Documentation = "https://github.com/KikuAI-Lab/DocStripper/wiki"
-Repository = "https://github.com/KikuAI-Lab/DocStripper"
-"Bug Reports" = "https://github.com/KikuAI-Lab/DocStripper/issues"
+Homepage = "https://github.com/kiku-jw/DocStripper"
+Documentation = "https://github.com/kiku-jw/DocStripper/wiki"
+Repository = "https://github.com/kiku-jw/DocStripper"
+"Bug Reports" = "https://github.com/kiku-jw/DocStripper/issues"
 
 [project.scripts]
 docstripper = "tool:main"

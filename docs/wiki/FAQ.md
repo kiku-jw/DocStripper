@@ -131,14 +131,14 @@ See our [Contributing Guide](Contributing) for details. We welcome:
 
 ### Where can I report bugs?
 
-Use the [GitHub Issues](https://github.com/KikuAI-Lab/DocStripper/issues) page and select the "Bug Report" template.
+Use the [GitHub Issues](https://github.com/kiku-jw/DocStripper/issues) page and select the "Bug Report" template.
 
 ### Can I suggest features?
 
-Absolutely! Use the [Feature Request template](https://github.com/KikuAI-Lab/DocStripper/issues/new?template=feature_request.md).
+Absolutely! Use the [Feature Request template](https://github.com/kiku-jw/DocStripper/issues/new?template=feature_request.md).
 
 ## Still have questions?
 
-- Check [GitHub Discussions](https://github.com/KikuAI-Lab/DocStripper/discussions)
-- Open an [Issue](https://github.com/KikuAI-Lab/DocStripper/issues)
+- Check [GitHub Discussions](https://github.com/kiku-jw/DocStripper/discussions)
+- Open an [Issue](https://github.com/kiku-jw/DocStripper/issues)
 - Visit the [Product Hunt page](https://www.producthunt.com/products/docstripper)
